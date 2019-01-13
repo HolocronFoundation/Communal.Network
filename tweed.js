@@ -42,27 +42,6 @@ mainContract = null;
 var lastTweedNumber = null; //default to something?
 var currentFee = null; //defaults to the last sent fee...
 
-var quotes = [
-				"The new web",
-				"Don't panic",
-				"Diamonds are forever",
-				"Globally decentralized",
-				"You are a person, not a product",
-				"Unabashedly uncensorable",
-				"The thoughts turn towards hope",
-				"Every wrong shall be set right",
-				"Let all thy acts be guided by pure intentions",
-				"What kind of world will be there tomorrow?",
-				"Beauty's voice speaketh gently",
-				"No deed can be annihilated",
-				"Are we intelligent enough to understand intelligence?"
-			];
-
-function loadQuote(){
-	
-	document.getElementById("quotes").innerHTML = quotes[Math.floor(Math.random() * quotes.length)];
-}
-
 var account = null;
 
 async function startApp(page){
@@ -89,7 +68,6 @@ async function startApp(page){
 	else{
 		document.getElementById("settingsDisplay").innerHTML = "<div class=\"center padded textBoxReplacement\">You aren't logged in! Log into an account to change your settings!<\div>";
 	}
-	loadQuote();
 	mainContract = new window.web3.eth.Contract(mainContractJSON, mainContractAddress);
 	calls = await Promise.all([callAndRetry(mainContract.methods.lastTweedNumber(), "lastTweedNumber"), callAndRetry(mainContract.methods.currentFee(), "currentFee")]);
 	lastTweedNumber = calls[0];
@@ -192,9 +170,6 @@ var userAccountAvailable = false;
 
 //sets up web3
 window.addEventListener('load', async () => {
-	document.getElementById('holder').onscroll = function() {
-		scroll();
-	}
 	
 	var url_string = window.location.href;
 	var url = new URL(url_string);
@@ -576,36 +551,6 @@ function displayParentTweed(replyToIndex, parentNode){
 		newNode.classList.add("reply_disp");
 		parentNode.insertBefore(newNode, parentNode.childNodes[0]);
 	})
-}
-
-var quote = true;
-
-function scroll(){
-	var holder = document.getElementById("holder");
-    var y = holder.scrollTop;
-	if(document.documentElement.clientHeight * 0.09 < y){
-		document.getElementById("newString").style.backgroundColor = "rgba(255, 255, 255, 0.95)";
-		document.getElementById("mainButton").style.backgroundColor = "rgba(255, 255, 255, 0.95)";
-		if(quote){
-			quote = false;
-			document.getElementById("quotes").style.opacity = 0;
-			window.setTimeout(function(){newFooter("Tweed.social")},500);
-		}
-	}
-	else{
-		document.getElementById("newString").style.backgroundColor = "rgba(255, 255, 255, 0.7)";
-		document.getElementById("mainButton").style.backgroundColor = "rgba(255, 255, 255, 0.95)";
-		if(!quote){
-			quote = true;
-			document.getElementById("quotes").style.opacity = 0;
-			window.setTimeout(function(){newFooter(quotes[Math.floor(Math.random() * quotes.length)])},500);
-		}
-	}
-}
-
-function newFooter(text){
-	document.getElementById("quotes").innerHTML = text;
-	document.getElementById("quotes").style.opacity = 1;
 }
 
 function loadUserInfo(address){

@@ -13,11 +13,9 @@
 		
 		<script type="text/javascript" src="tweed.js"></script>
 		
-		<link href="https://fonts.googleapis.com/css?family=Questrial|Quicksand|Source+Sans+Pro" rel="stylesheet">
-		
 		<link rel="shortcut icon" type="image/x-icon" href="Branding/logo_transparent.png"/>
 		
-		<title>Tweed.Social</title>
+		<title>Communal.Network</title>
 		
 	</head>
 	
@@ -27,16 +25,10 @@
 			
 			<div id="holder">
 				<header class="center">
-					<img src="Branding/logo_transparent.png" alt="Tweed.social" class="logo_header">
+					<h1>Communal.Network</h1>
+					<h4>Testnet V0.1 | HTML V0.1 | CSS V0.1 | JS V0.1 | Github[[link]]</h4>
+					<div id="userSettings" class="navBar" onClick="footerClick('userSettings')">Settings</div><div id="genFeed" class="navBar" onClick="footerClick('genFeed')">General Feed</div><div id="userFeed" class="navBar" onClick="footerClick('userFeed')">Your Feed</div><div id="yourFeed" class="navBar" onClick="footerClick('yourFeed')">You</div><div id="about" class="navBar" onClick="footerClick('about')">About</div>
 				</header>
-				<div id="newTweed" class="content">
-					<div class="stringInput center">
-						<textarea id="newString" class="stringInputBox" onfocus="clearDefaultText(this, 'Enter your tweed here!');" maxlength="1024">Enter your tweed here!</textarea>
-					</div>
-					<div class="center">
-						<button type="button" class="center" onclick="sendTweed()" id="mainButton">Send Tweed!</button>
-					</div>
-				</div>
 				<div id="settingsDisplay" class="center">
 					<!-- On-chain Settings -->
 					<div class="center">
@@ -78,14 +70,15 @@
 				</div>
 				<div id="feed" class="content">
 				</div>
+				<div id="newTweed" class="content">
+					<div class="stringInput center">
+						<textarea id="newString" class="stringInputBox" onfocus="clearDefaultText(this, 'Enter your tweed here!');" maxlength="1024">Enter your tweed here!</textarea>
+					</div>
+					<div class="center">
+						<button type="button" class="center" onclick="sendTweed()" id="mainButton">Send Tweed!</button>
+					</div>
+				</div>
 			</div>
-			
-			
-
-			<footer class="center">
-				<div id="userSettings" class="footerTab" onClick="footerClick('userSettings')">Settings</div><div id="genFeed" class="footerTab" onClick="footerClick('genFeed')">General Feed</div><div id="userFeed" class="footerTab" onClick="footerClick('userFeed')">Your Feed</div><div id="yourFeed" class="footerTab" onClick="footerClick('yourFeed')">You</div><div id="about" class="footerTab" onClick="footerClick('about')">About</div>
-				<div id="quotes"></div>
-			</footer>
 		</section>
 	</body>
 	
