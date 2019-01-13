@@ -5,9 +5,6 @@
 #               [[Add ERC 20 support]]
 #               - Requires authorized external senders
 
-#               [[Investment feature: put eth in get a set percent. Minimum percent of fees collected will go toward paying off investments.]]
-#               - Requires forcing the money to a set address
-
 #               [[Add @ functionality (important for dms, etc.)]]
 
 #               [[Multi file support via external contract]]
@@ -23,14 +20,6 @@ backupAddress: address #Allow to change management address but that's it
 initialized: bool
 
 externalSenderAuthorization: bool[address]
-
-###   Fee Management   ###
-
-currentFee: public(wei_value)
-
-   ###   Withdrawal   ###
-
-withdrawableFees: wei_value
 
 ###   Blank variables for safe comparisons   ###
 
@@ -149,28 +138,9 @@ def unfavoriteTweed(tweedIndex: uint256):
         self.tweed[tweedIndex].favoriteCount = self.tweed[tweedIndex].favoriteCount - 1
 
 @public
-def withdrawSpentFees(amount: wei_value):
-	assert amount <= self.withdrawableFees and msg.sender == self.managementAddress
-	self.withdrawableFees -= amount
-	send(self.managementAddress, amount)
-
-@public
-def withdrawAllSpentFees():
-	assert msg.sender == self.managementAddress
-	_amount: wei_value = self.withdrawableFees
-	self.withdrawableFees = 0
-	send(self.managementAddress, _amount)
-
-@public
-def setFee(newFee: wei_value):
-	assert msg.sender == self.managementAddress
-	self.currentFee = newFee
-
-@public
 @payable
 def claimUsername(username: bytes32):
 	assert self.usernameToAddress[username] == self.blankAddress and self.user[msg.sender].username == self.blankUsername
-	assert msg.value == self.currentFee
 	self.usernameToAddress[username] = msg.sender
 	self.user[msg.sender].username = username
 
@@ -251,8 +221,6 @@ def transfer(tweedIndex: uint256):
 @public
 @payable
 def sendTweedEth(tweedString: bytes[1024], replyToIndex: uint256, fileType: uint256):
-        assert msg.value == self.currentFee
-        self.withdrawableFees += self.currentFee
         self.sendTweed(msg.sender, tweedString, replyToIndex, fileType)
 
 @public
@@ -265,8 +233,6 @@ def sendTweedExternal(_sender: address, tweedString: bytes[1024], replyToIndex: 
 @public
 @payable
 def reTweed(tweedIndex: uint256):
-        assert msg.value == self.currentFee
-        self.withdrawableFees += self.currentFee
         # Pulls the original tweed index in case the retweed is a retweed of a retweed
         _tweedIndex: uint256 = tweedIndex
         if self.tweed[_tweedIndex].originalIndex != 0:
@@ -287,8 +253,6 @@ def reTweed(tweedIndex: uint256):
 @public
 @payable
 def setDisplayname(displayname: bytes[1024]):
-        assert msg.value == self.currentFee
-        self.withdrawableFees += self.currentFee
         self.sendTweed(msg.sender, displayname, 0, 1)
         self.user[msg.sender].displayName = self.lastTweedNumber
 
@@ -318,8 +282,6 @@ def reactivateAccount():
 @public
 def __init__():
         assert not self.initialized
-        self.currentFee = 50000000000000
-        self.retweedFee = 50000000000000
         self.managementAddress = 0x877769a9FC3a3154F19270bF951DEa39ef8628Cf
         self.backupAddress = 0x51CE88B114c959aCB729e0a4899E9D9CccEEB69e
         self.initialized = True

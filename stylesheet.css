@@ -112,6 +112,10 @@ h1, h4 {
 h1{
 	color: #D7263D;
 	font-size: 2em;
+	font-family: 'Lobster', cursive;
+}
+h3{
+	color: #2176FF;
 }
 h4 {
 	font-size: 1em;
@@ -137,8 +141,7 @@ ul {
 	padding-top: 1vh;
 	text-align: center;
 	animation: 1s slideUp;
-	opacity: .8;
-	background-color: #D6E6FF;
+	background-color: rgba(214,230,255,0.80);
 }
 
 .metadata {
@@ -170,9 +173,11 @@ div.favorite, div.reply, div.retweed, div.trash, .replyToNote, .followUser, div.
 	margin: .2em;
 	white-space: pre;
 	background: white;
+	opacity: .7;
 }
 div.favorite:hover, div.reply:hover, div.retweed:hover, div.trash:hover, .replyToNote:hover, .followUser:hover, div.transfer:hover, .replies:hover, div.share:hover {
 	cursor: pointer;
+	opacity: .95;
 }
 
 .followUser {
@@ -263,7 +268,7 @@ div.displayReplies div.tweed div.replyToNote{
 }
 
 #feed {
-	margin-top: calc(.5em + 2em + 1em + .5em + 3px + 1.5vh + 1.5em);
+	margin-top: calc(.5em + 2em + 1em + .5em + 4px + 1.5vh + 2em);
 	overflow-y: auto;
 	overflow-x: hidden;
 	height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 2.5em);
@@ -279,6 +284,7 @@ body {
 	margin: 0;
 	overflow-y: hidden;
 	color: #00072D;
+	font-family: 'Thasadith', sans-serif;
 }
 
 textarea {
@@ -331,6 +337,7 @@ header {
 
 .navBar:hover {
 	cursor: pointer;
+	background-color: #2E3453;
 }
 
 .content {
@@ -354,8 +361,11 @@ header {
 }
 
 a {
+	color: #2F5BA3;
 }
-
-/* mouse over link */
+a:visited {
+	color: #8E323E;
+}
 a:hover {
+	color: #8D95A3;
 }
