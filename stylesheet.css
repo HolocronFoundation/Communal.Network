@@ -106,19 +106,26 @@ section {
 	text-align: left;
 }
 
-h1, h4 {
+h1, h2, h4 {
 	margin: 0;
 }
-h1{
-	color: #D7263D;
-	font-size: 2em;
+h1, h2, h4{
 	font-family: 'Lobster', cursive;
 }
+h1{
+	color: rgba(215,38,61,.8);
+	font-size: 2em;
+}
+h2{
+	font-size: 1em;
+	margin-top: -.25em;
+}
 h3{
-	color: #2176FF;
+	color: rgba(33,118,255,.8);
 }
 h4 {
 	font-size: 1em;
+	margin-top: -.5em;
 }
 
 ul {
@@ -130,10 +137,11 @@ ul {
 	text-align: center;
 }
 
-.tweed {
+.message {
 	border-width: 3px;
-	border-color: #2176FF;
+	border-color: rgba(33,118,255,.8);
 	border-bottom-style: double;
+	border-top-style: double;
 	border-radius: 3vh;
 	padding-left: 1vw;
 	padding-right: 1vw;
@@ -161,7 +169,7 @@ ul {
 	height: 1.5em;
 }
 
-div.favorite, div.reply, div.retweed, div.trash, .replyToNote, .followUser, div.transfer, .replies, div.share {
+div.favorite, div.reply, div.remessage, div.trash, .replyToNote, .followUser, div.transfer, .replies, div.share {
 	border: solid;
 	border-width: 1px;
 	border-radius: 7px;
@@ -175,7 +183,7 @@ div.favorite, div.reply, div.retweed, div.trash, .replyToNote, .followUser, div.
 	background: white;
 	opacity: .7;
 }
-div.favorite:hover, div.reply:hover, div.retweed:hover, div.trash:hover, .replyToNote:hover, .followUser:hover, div.transfer:hover, .replies:hover, div.share:hover {
+div.favorite:hover, div.reply:hover, div.remessage:hover, div.trash:hover, .replyToNote:hover, .followUser:hover, div.transfer:hover, .replies:hover, div.share:hover {
 	cursor: pointer;
 	opacity: .95;
 }
@@ -226,7 +234,7 @@ div.replies {
 	animation: 1s slideDown;
 }
 
-div.displayReplies div.tweed {
+div.displayReplies div.message {
 	border-top-style: dotted;
 	border-bottom-style: none;
 	padding-left: 0;
@@ -235,7 +243,7 @@ div.displayReplies div.tweed {
 	animation: 1s slideUp;
 }
 
-div.displayReplies div.tweed div.replyToNote{
+div.displayReplies div.message div.replyToNote{
 	display: none;
 }
 
@@ -252,11 +260,11 @@ div.displayReplies div.tweed div.replyToNote{
 }
 
 #userSettings {
-	border-top-left-radius: 3vh;
+	border-top-left-radius: 4vh;
 }
 
 #about {
-	border-top-right-radius: 3vh;
+	border-top-right-radius: 4vh;
 }
 
 #holder {
@@ -273,6 +281,14 @@ div.displayReplies div.tweed div.replyToNote{
 	overflow-x: hidden;
 	height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 2.5em);
 	max-height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 2.5em); /* [[Need to calculate]] */
+	border-bottom-right-radius: 10vh;
+	border-bottom-left-radius: 10vh;
+	background-color: rgba(0,7,45,.4);
+	border-top-right-radius: 5vh;
+	border-top-left-radius: 5vh;
+	border-color: rgba(33,118,255,.8);
+	border-bottom-style: double;
+	border-top-style: double;
 }
 
 .media {
@@ -312,10 +328,10 @@ textarea.stringInputBox {
 
 header {
     position: absolute;
-	width: 100%;
-	background-color: #00072D;
 	padding-top: .5em;
-	color: #2176FF;
+	color: rgba(33,118,255,.8);
+	margin-right: calc((100vw - 35em) / 2);
+	margin-left: calc((100vw - 35em) / 2);
 }
 
 #newString {
@@ -332,7 +348,7 @@ header {
 	padding-bottom: 1vh;
 	padding-top: .5vh;
 	min-width: 7em;
-	margin-top: .5em;
+	background-color: rgba(0,7,45,.4);
 }
 
 .navBar:hover {

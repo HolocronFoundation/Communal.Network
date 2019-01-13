@@ -28,7 +28,8 @@
 			<div id="holder">
 				<header class="center">
 					<h1>Communal . Network</h1>
-					<h4>Testnet V0.1 | HTML V0.1 | CSS V0.1 | JS V0.1 | Github[[link]]</h4>
+					<h4>// VY ver0.1 //\|/\\ Web ver0.1 \\</h4>
+					<h2>//\ By the Holocron.Foundation /\\</h2>
 					<div id="userSettings" class="navBar" onClick="footerClick('userSettings')">Settings</div><div id="genFeed" class="navBar" onClick="footerClick('genFeed')">General Feed</div><div id="userFeed" class="navBar" onClick="footerClick('userFeed')">Your Feed</div><div id="yourFeed" class="navBar" onClick="footerClick('yourFeed')">You</div><div id="about" class="navBar" onClick="footerClick('about')">About</div>
 				</header>
 				<div id="settingsDisplay" class="center">
@@ -38,48 +39,19 @@
 					</div>
 					<button type="button" class="center" onclick="setUsername()">Set my user name (Can only be done once!)</button> <!--[{HIDE if done]]-->
 					<!-- Local (Cookie) Settings -->
-					<!--[[<button type="button" class="center" onclick="setNumberOfTweedsPerPage()">Set Tweeds per page]]</button>-->
-				</div>
-			
-				<div id="aboutText" class="content">
-						<h1>Why Tweed.social?</h1>
-							<h3>You are a Person, Not a Product</h3>
-								<p>We don't make our money selling your data. We don't even collect anything beyond the bare necessities needed to actually run our site (e.g. the actual message you send). We work for you, not advertisers.</p>
-							<h3>Global</h3>
-								<p>Tweed.social is the first truly global social network. By leveraging the power of Ethereum, we are able to create a truly global network, not dependent upon the whims of commercial or governmental interests.</p>
-							<h3>Decentralized</h3>
-								<p>Tweed.social runs on the Ethereum network. The Ethereum is composed of well over 10,000 computers, located around the world. The network is approximately distributed as follows:</p>
-								<ul>
-									<li>42.5% - United States</li>
-									<li>12.5% - China</li>
-									<li>7.5% - Canada</li>
-									<li>3.5% - Germany</li>
-									<li>3.5% - Russia</li>
-									<li>3.0% - United Kingdom</li>
-									<li>.</li>
-									<li>.</li>
-									<li>.</li>
-								</ul>
-							<h3>Secure</h3>
-								<p>We don't store your passwords. You are in charge of your own security. We don't have any servers to hack.</p>
-							<h3>Forever</h3>
-								<p>As long as the Ethereum Network runs, Tweed.social will too.</p>
-							<h3>Censor-resistant</h3>
-								<p>The peer to peer nature of the Ethereum network makes it extremely difficult (compared to traditional sites) to block access.</p>
-								<p>We also can't censor you via algorithms. All our algorithms which actually pull our data and display it run in your own browser. You can even take a look yourself!</p>
-							<h3>Spam-resistant</h3>
-								<p>Unlike traditional social networks, where there is no inherent spam deterent, the minute cost is a spam deterent. Limited spammers, limited election interference. More of the content you actually want to see.</p>
+					<!--[[<button type="button" class="center" onclick="setNumberOfMessagesPerPage()">Set Messages per page]]</button>-->
 				</div>
 				<div id="feed" class="content">
 				</div>
-				<div id="newTweed" class="content">
+				<div id="newMessage" class="content">
 					<div class="stringInput center">
-						<textarea id="newString" class="stringInputBox" onfocus="clearDefaultText(this, 'Enter your tweed here!');" maxlength="1024">Enter your tweed here!</textarea>
+						<textarea id="newString" class="stringInputBox" onfocus="clearDefaultText(this, 'Enter your message here!');" maxlength="1024">Enter your message here!</textarea>
 					</div>
 					<div class="center">
-						<button type="button" class="center" onclick="sendTweed()" id="mainButton">Send Tweed!</button>
+						<button type="button" class="center" onclick="sendMessage()" id="mainButton">Send message!</button>
 					</div>
 				</div>
+				<div id="aboutText" class="content"></div>
 			</div>
 		</section>
 	</body>

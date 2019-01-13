@@ -1,6 +1,6 @@
 // JavaScript Document
 
-//[{Add replies and retweeding of retweeds]]
+//[{Add replies and remessageing of remessages]]
 
 function clearDefaultText(element, defaultText) {
 	"use strict";
@@ -39,8 +39,7 @@ mainContract = null;
 
 //Variables pulled via calls
 
-var lastTweedNumber = null; //default to something?
-var currentFee = null; //defaults to the last sent fee...
+var lastMessageNumber = null; //default to something?
 
 var account = null;
 
@@ -52,7 +51,7 @@ async function startApp(page){
 		}
 		else{
 			document.getElementById("settingsDisplay").innerHTML = "<div class=\"center padded textBoxReplacement\">You aren't logged in! Log into an account to change your settings!<\div>";
-			document.getElementById("newString").innerHTML = "You aren't logged in! Log in to send a Tweed!";
+			document.getElementById("newString").innerHTML = "You aren't logged in! Log in to send a message!";
 		}
 		var accountInterval = setInterval(function() {
 			window.web3.eth.getAccounts().then(function(accounts){
@@ -69,9 +68,8 @@ async function startApp(page){
 		document.getElementById("settingsDisplay").innerHTML = "<div class=\"center padded textBoxReplacement\">You aren't logged in! Log into an account to change your settings!<\div>";
 	}
 	mainContract = new window.web3.eth.Contract(mainContractJSON, mainContractAddress);
-	calls = await Promise.all([callAndRetry(mainContract.methods.lastTweedNumber(), "lastTweedNumber"), callAndRetry(mainContract.methods.currentFee(), "currentFee")]);
-	lastTweedNumber = calls[0];
-	currentFee = calls[1];
+	calls = await Promise.all([callAndRetry(mainContract.methods.lastTweedNumber(), "lastMessageNumber")]);
+	lastMessageNumber = calls[0];
 	if(page==null){
 		loadGeneralFeed();
 	}
@@ -83,10 +81,10 @@ async function startApp(page){
 		}
 		if(pageType == 'about'){
 			document.getElementById("aboutText").style.display = "block";
-			document.getElementById("newTweed").style.display = "none";
+			document.getElementById("newMessage").style.display = "none";
 		}
-		if(pageType == 'tweed'){
-			loadIndividualTweed(pageInfo);
+		if(pageType == 'message'){
+			loadIndividualMessage(pageInfo);
 		}
 	}
 }
@@ -96,13 +94,11 @@ function setDisplayName(){
 	newName = window.web3.utils.utf8ToHex(newName);
 	mainContract.methods.setDisplayname(newName).estimateGas({
 					from: account,
-					value: currentFee
 				})
 		.then(function(gas){
 			mainContract.methods.setDisplayname(newName).send(
 			{
 				from: account,
-				value: currentFee,
 				gas: gas
 			}).on('transactionHash', function(hash){
     			nameSent(hash);
@@ -116,14 +112,12 @@ function setUsername(){
 	newName = window.web3.utils.utf8ToHex(newName);
 	//[{Check if username is in use]]
 	mainContract.methods.claimUsername(newName).estimateGas({
-					from: account,
-					value: currentFee
+					from: account
 				})
 		.then(function(gas){
 			mainContract.methods.claimUsername(newName).send(
 			{
 				from: account,
-				value: currentFee,
 				gas: gas
 			}).on('transactionHash', function(hash){
     			nameSent(hash);
@@ -136,33 +130,31 @@ function nameSent(hash){
 	alert("Your new name has been sent!");
 }
 
-function sendTweed(){
+function sendMessage(){
 	if(account == null){
 		alert("You aren't logged in! Please sign in to an account!")
 	}
 	else{
 		toSend = window.web3.utils.utf8ToHex(document.getElementById("newString").value);
 		mainContract.methods.sendTweedEth(toSend, 0, 0).estimateGas({
-					from: account,
-					value: currentFee
+					from: account
 				})
 			.then(function(gas){
 				mainContract.methods.sendTweedEth(toSend, 0, 0).send(
 				{
 					from: account,
-					gas: gas,
-					value: currentFee
+					gas: gas
 				}).on('transactionHash', function(hash){
-					tweedSent(hash);
+					messageSent(hash);
 				});
 			}
 		);
 	}
 }
 
-function tweedSent(hash){
-	document.getElementById("newString").value = "Enter your tweed here!";
-	alert("Your tweed was succesfully sent!");
+function messageSent(hash){
+	document.getElementById("newString").value = "Enter your message here!";
+	alert("Your message was succesfully sent!");
 }
 
 var web3Type = null;
@@ -254,10 +246,10 @@ async function loadUserPage(userID, isAddress){
 	h.appendChild(totalFollowers);
 	userDiv.append(h);
 	
-	//Tweed Count
-	var totalTweeds = document.createTextNode(userInfo[2] + " Tweeds")
+	//Message Count
+	var totalMessages = document.createTextNode(userInfo[2] + " Messages")
 	h = document.createElement("H3");
-	h.appendChild(totalTweeds);
+	h.appendChild(totalMessages);
 	userDiv.append(h);
 	
 	userDiv.classList.add('userInfo');
@@ -267,15 +259,15 @@ async function loadUserPage(userID, isAddress){
 
 var num_display = 10
 
-async function loadIndividualTweed(tweedIndex){
+async function loadIndividualMessage(messageIndex){
 	document.getElementById("feed").innerHTML = '';
-	var tweed = [loadTweed(tweedIndex, account)];
-	checked = await checkTweed(tweedIndex, 0);
+	var message = [loadMessage(messageIndex, account)];
+	checked = await checkMessage(messageIndex, 0);
 	if(!checked){
-		document.getElementById("feed").innerHTML = "<h1>Sorry, this Tweed either does not exist, has been deleted, or has been banned from our site.</h1>"
+		document.getElementById("feed").innerHTML = "<h1>Sorry, this message either does not exist, has been deleted, or has been banned from our site.</h1>"
 	}
 	else{
-		results = await Promise.all(tweed);
+		results = await Promise.all(message);
 		populateFeed(results);
 	}
 }
@@ -286,19 +278,19 @@ async function loadReplyFeed(parentDiv, parentIndex, numberToLoad=num_replies, s
 	if(startIndex == -1){
 		startIndex = await callAndRetry(mainContract.methods.tweed__numberOfReplies(parentIndex), "replyCount");
 	}
-	var tweeds = [];
-	var tweedsLoaded = 0;
+	var messages = [];
+	var messagesLoaded = 0;
 	var nextLoadIndex = startIndex;
-	while(tweedsLoaded < numberToLoad && nextLoadIndex > 0){
-		checked = await callAndRetry(mainContract.methods.tweed__replyIndex(parentIndex, nextLoadIndex), 1).then(function(tweedIndex){return Promise.all([checkTweed(tweedIndex, 0), tweedIndex]);});
+	while(messagesLoaded < numberToLoad && nextLoadIndex > 0){
+		checked = await callAndRetry(mainContract.methods.tweed__replyIndex(parentIndex, nextLoadIndex), 1).then(function(messageIndex){return Promise.all([checkMessage(messageIndex, 0), messageIndex]);});
 		//[{load a chunk equal to the amount left to load e.g. load ten and then load 10-x more where x is the number that are good]]
 		if(checked[0]){
-			tweedsLoaded++;
-			tweeds.push(loadTweed(checked[1], account));
+			messagesLoaded++;
+			messages.push(loadMessage(checked[1], account));
 		}
 		nextLoadIndex--;
 	}
-	results = await Promise.all(tweeds);
+	results = await Promise.all(messages);
 	populateFeed(results, parentDiv);
 	if(nextLoadIndex != 0){
 		var loadMoreDiv = document.createElement("div");
@@ -311,22 +303,22 @@ async function loadReplyFeed(parentDiv, parentIndex, numberToLoad=num_replies, s
 	}
 }
 
-async function loadGeneralFeed(numberToLoad=num_display, startIndex=lastTweedNumber){
-	var tweeds = [];
+async function loadGeneralFeed(numberToLoad=num_display, startIndex=lastMessageNumber){
+	var messages = [];
 	var indices = [];
-	var tweedsLoaded = 0;
+	var messagesLoaded = 0;
 	var nextLoadIndex = startIndex;
-	while(tweedsLoaded < numberToLoad && nextLoadIndex > 0){
-		checked = await checkTweed(nextLoadIndex, 0);
+	while(messagesLoaded < numberToLoad && nextLoadIndex > 0){
+		checked = await checkMessage(nextLoadIndex, 0);
 		//[{load a chunk equal to the amount left to load e.g. load ten and then load 10-x more where x is the number that are good]]
 		if(checked){
 			indices.push(nextLoadIndex);
-			tweedsLoaded++;
-			tweeds.push(loadTweed(nextLoadIndex, account));
+			messagesLoaded++;
+			messages.push(loadMessage(nextLoadIndex, account));
 		}
 		nextLoadIndex--;
 	}
-	results = await Promise.all(tweeds);
+	results = await Promise.all(messages);
 	populateFeed(results);
 	if(nextLoadIndex != 0){
 		var loadMoreDiv = document.createElement("div");
@@ -339,55 +331,55 @@ async function loadGeneralFeed(numberToLoad=num_display, startIndex=lastTweedNum
 	}
 }
 
-function populateFeed(tweeds, div="feed"){
+function populateFeed(messages, div="feed"){
 	if(div == "feed"){
 		div = document.getElementById("feed");
 	}
-	for (var i = 0; i < tweeds.length; i++) {
-		loadedTweed = tweeds[i];
-		div.appendChild(generateTweedHTML(loadedTweed[0], loadedTweed[1], loadedTweed[2], loadedTweed[3], loadedTweed[4], loadedTweed[5], loadedTweed[6], loadedTweed[7], loadedTweed[8], account, loadedTweed[9], loadedTweed[10], loadedTweed[11], loadedTweed[12]));
+	for (var i = 0; i < messages.length; i++) {
+		loadedMessage = messages[i];
+		div.appendChild(generateMessageHTML(loadedMessage[0], loadedMessage[1], loadedMessage[2], loadedMessage[3], loadedMessage[4], loadedMessage[5], loadedMessage[6], loadedMessage[7], loadedMessage[8], account, loadedMessage[9], loadedMessage[10], loadedMessage[11], loadedMessage[12]));
 	}
 }
 
-function checkTweed(tweedIndex, fileType){
-	return callAndRetry(mainContract.methods.tweed__originalIndex(tweedIndex), 2).then(function(originalIndex){
-		var retweedDeleted = false;
+function checkMessage(messageIndex, fileType){
+	return callAndRetry(mainContract.methods.tweed__originalIndex(messageIndex), 2).then(function(originalIndex){
+		var remessageDeleted = false;
 		if(originalIndex == 0){
-			originalIndex = tweedIndex;
+			originalIndex = messageIndex;
 		}
 		else{
-			retweedDeleted = callAndRetry(mainContract.methods.tweed__deleted(tweedIndex), 3);
+			remessageDeleted = callAndRetry(mainContract.methods.tweed__deleted(messageIndex), 3);
 		}
 		return Promise.all([
 						callAndRetry(mainContract.methods.tweed__deleted(originalIndex), 4),
 						callAndRetry(mainContract.methods.tweed__banned(originalIndex), 5),
 						callAndRetry(mainContract.methods.tweed__fileType(originalIndex), 6),
-						retweedDeleted
+						remessageDeleted
 					]).then(function(resultsPromise){
 						return (!(resultsPromise[0] || resultsPromise[1])) && fileType == resultsPromise[2] && !resultsPromise[3];
 					});
 	});
 }
 
-function checkTweed_user(userAddress, fileIndex, fileType){
-	return callAndRetry(mainContract.methods.user__filings__fileIndices(userAddress, 0, fileIndex),7).then(function(tweedIndex){
-		return checkTweed(tweedIndex, fileType);
+function checkMessage_user(userAddress, fileIndex, fileType){
+	return callAndRetry(mainContract.methods.user__filings__fileIndices(userAddress, 0, fileIndex),7).then(function(messageIndex){
+		return checkMessage(messageIndex, fileType);
 	});
 }
 
-function loadTweed(tweedIndex, readerAccount){
-	//[[Check local storage for a tweed with tweedIndex, if it is there return it]]
-	var localCheck = localStorage.getItem("t"+tweedIndex);
-	var loadedTweed = null
+function loadMessage(messageIndex, readerAccount){
+	//[[Check local storage for a message with messageIndex, if it is there return it]]
+	var localCheck = localStorage.getItem("t"+messageIndex);
+	var loadedMessage = null
 	if(localCheck == null){
-		loadedTweed = callAndRetry(mainContract.methods.tweed__originalIndex(tweedIndex),8).then(function(originalIndex){
-			retweedInfo = []
+		loadedMessage = callAndRetry(mainContract.methods.tweed__originalIndex(messageIndex),8).then(function(originalIndex){
+			remessageInfo = []
 			if(originalIndex == 0){
-				originalIndex = tweedIndex;
+				originalIndex = messageIndex;
 			}
 			else {
-				retweedInfo = [
-								callAndRetry(mainContract.methods.tweed__senderAddress(tweedIndex),9).then(function(rawAddress){
+				remessageInfo = [
+								callAndRetry(mainContract.methods.tweed__senderAddress(messageIndex),9).then(function(rawAddress){
 									return Promise.all([
 										rawAddress,
 										callAndRetry(mainContract.methods.user__username(rawAddress),10),
@@ -399,7 +391,7 @@ function loadTweed(tweedIndex, readerAccount){
 										callAndRetry(mainContract.methods.user__currentlyFollowing(readerAccount, rawAddress),14)
 									]);
 								}),
-								callAndRetry(mainContract.methods.tweed__timeSent(tweedIndex),15)
+								callAndRetry(mainContract.methods.tweed__timeSent(messageIndex),15)
 							];
 			}
 
@@ -427,20 +419,20 @@ function loadTweed(tweedIndex, readerAccount){
 							callAndRetry(mainContract.methods.tweed__reTweedCount(originalIndex),27),
 							originalIndex,
 							callAndRetry(mainContract.methods.user__currentlyFavorited(readerAccount, originalIndex),28),
-							callAndRetry(mainContract.methods.user__originalToRetweed(readerAccount, originalIndex),29).then(function(retweedIndex){
-								if(retweedIndex == tweedIndex){
+							callAndRetry(mainContract.methods.user__originalToRetweed(readerAccount, originalIndex),29).then(function(remessageIndex){
+								if(remessageIndex == messageIndex){
 									return true;
 								}
-								if(retweedIndex == 0){
+								if(remessageIndex == 0){
 									return false;
 								}
-								return callAndRetry(mainContract.methods.tweed__deleted(retweedIndex),30).then(function(deleted){
+								return callAndRetry(mainContract.methods.tweed__deleted(remessageIndex),30).then(function(deleted){
 									return !deleted;
 								})
 							}),
-							Promise.all(retweedInfo),
+							Promise.all(remessageInfo),
 							callAndRetry(mainContract.methods.tweed__replyToIndex(originalIndex),31),
-							tweedIndex,
+							messageIndex,
 							callAndRetry(mainContract.methods.tweed__totalAmount(originalIndex),32),
 							callAndRetry(mainContract.methods.tweed__numberOfReplies(originalIndex),33)
 			]);
@@ -451,9 +443,9 @@ function loadTweed(tweedIndex, readerAccount){
 		var localCopy = JSON.parse(localCheck);
 		console.log(localCopy);
 		var originalIndex = localCopy[5];
-			retweedInfo = []
-			if(originalIndex != tweedIndex){
-				retweedInfo = [
+			remessageInfo = []
+			if(originalIndex != messageIndex){
+				remessageInfo = [
 								Promise.all([
 									localCopy[8][0][0],
 									callAndRetry(mainContract.methods.user__username(localCopy[8][0][0]),10),
@@ -468,7 +460,7 @@ function loadTweed(tweedIndex, readerAccount){
 							];
 			}
 
-			loadedTweed = Promise.all([
+			loadedMessage = Promise.all([
 							localCopy[0],
 							Promise.all([
 									localCopy[1][0],
@@ -485,34 +477,34 @@ function loadTweed(tweedIndex, readerAccount){
 							callAndRetry(mainContract.methods.tweed__reTweedCount(originalIndex),27),
 							originalIndex,
 							callAndRetry(mainContract.methods.user__currentlyFavorited(readerAccount, originalIndex),28),
-							callAndRetry(mainContract.methods.user__originalToRetweed(readerAccount, originalIndex),29).then(function(retweedIndex){
-								if(retweedIndex == tweedIndex){
+							callAndRetry(mainContract.methods.user__originalToRetweed(readerAccount, originalIndex),29).then(function(remessageIndex){
+								if(remessageIndex == messageIndex){
 									return true;
 								}
-								if(retweedIndex == 0){
+								if(remessageIndex == 0){
 									return false;
 								}
-								return callAndRetry(mainContract.methods.tweed__deleted(retweedIndex),30).then(function(deleted){
+								return callAndRetry(mainContract.methods.tweed__deleted(remessageIndex),30).then(function(deleted){
 									return !deleted;
 								})
 							}),
-							Promise.all(retweedInfo),
+							Promise.all(remessageInfo),
 							localCopy[9],
-							tweedIndex,
+							messageIndex,
 							callAndRetry(mainContract.methods.tweed__totalAmount(originalIndex),32),
 							callAndRetry(mainContract.methods.tweed__numberOfReplies(originalIndex),33)
 			]);
 		}
-	return loadedTweed.then(function(loadedResults){
+	return loadedMessage.then(function(loadedResults){
 		console.log(loadedResults);
-		localStorage.setItem('t'+tweedIndex, JSON.stringify(loadedResults));
+		localStorage.setItem('t'+messageIndex, JSON.stringify(loadedResults));
 		return loadedResults;
 	});
 }
 
-function loadTweed_user(userAddress, fileIndex, readerAccount){
-	return callAndRetry(mainContract.methods.user__filings__fileIndices(userAddress, 0, fileIndex),34).then(function(tweedIndex){
-		return loadTweed(tweedIndex, readerAccount);
+function loadMessage_user(userAddress, fileIndex, readerAccount){
+	return callAndRetry(mainContract.methods.user__filings__fileIndices(userAddress, 0, fileIndex),34).then(function(messageIndex){
+		return loadMessage(messageIndex, readerAccount);
 	});
 }
 
@@ -545,9 +537,9 @@ function parseDate(unixdate){
 	return unixdate.toLocaleDateString("en-us", {hour: "numeric", minute:"numeric"});
 }
 
-function displayParentTweed(replyToIndex, parentNode){
-	loadTweed(replyToIndex, account).then(function(loadedTweed){
-		newNode = generateTweedHTML(loadedTweed[0], loadedTweed[1], loadedTweed[2], loadedTweed[3], loadedTweed[4], loadedTweed[5], loadedTweed[6], loadedTweed[7], loadedTweed[8], account, loadedTweed[9], loadedTweed[10], loadedTweed[11], loadedTweed[12]);
+function displayParentMessage(replyToIndex, parentNode){
+	loadMessage(replyToIndex, account).then(function(loadedMessage){
+		newNode = generateMessageHTML(loadedMessage[0], loadedMessage[1], loadedMessage[2], loadedMessage[3], loadedMessage[4], loadedMessage[5], loadedMessage[6], loadedMessage[7], loadedMessage[8], account, loadedMessage[9], loadedMessage[10], loadedMessage[11], loadedMessage[12]);
 		newNode.classList.add("reply_disp");
 		parentNode.insertBefore(newNode, parentNode.childNodes[0]);
 	})
@@ -567,24 +559,24 @@ function loadUserInfo(address){
 	])
 }
 
-async function loadUserFeed(address, numberToLoad=num_display, nextLoadIndex=lastTweedNumber){
+async function loadUserFeed(address, numberToLoad=num_display, nextLoadIndex=lastMessageNumber){
 	
-	var tweeds = [];
-	var tweedsLoaded = 0;
-	if(nextLoadIndex == lastTweedNumber){
+	var messages = [];
+	var messagesLoaded = 0;
+	if(nextLoadIndex == lastMessageNumber){
 		var toLoad = await Promise.all([callAndRetry(mainContract.methods.user__filings__numberOfFiles(address, 0)),2222]);
 		nextLoadIndex = toLoad[0] - 1;
 	}
-	while(tweedsLoaded < numberToLoad && nextLoadIndex >= 0){
-		checked = await checkTweed_user(address, nextLoadIndex, 0);
+	while(messagesLoaded < numberToLoad && nextLoadIndex >= 0){
+		checked = await checkMessage_user(address, nextLoadIndex, 0);
 		//[{load a chunk equal to the amount left to load e.g. load ten and then load 10-x more where x is the number that are good]]
 		if(checked){
-			tweedsLoaded++;
-			tweeds.push(loadTweed_user(address, nextLoadIndex, account));
+			messagesLoaded++;
+			messages.push(loadMessage_user(address, nextLoadIndex, account));
 		}
 		nextLoadIndex--;
 	}
-	results = await Promise.all(tweeds);
+	results = await Promise.all(messages);
 	populateFeed(results);
 	
 	if(nextLoadIndex >= 0){
@@ -598,49 +590,49 @@ async function loadUserFeed(address, numberToLoad=num_display, nextLoadIndex=las
 	}
 }
 
-function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweedCount, tweedIndex, favorited, retweeded, retweederInfo, readerAccount, replyToIndex, fileIndex, ethCount, totalReplies){
+function generateMessageHTML(messageString, sender, timeSent, favoriteCount, remessageCount, messageIndex, favorited, remessageed, remessageerInfo, readerAccount, replyToIndex, fileIndex, ethCount, totalReplies){
 	var parent = document.createElement("div");
-	parent.classList.add("tweed");
-	parent.classList.add(tweedIndex);
+	parent.classList.add("message");
+	parent.classList.add(messageIndex);
 	
 	if(replyToIndex != 0){
 		parent.classList.add("displayReply");
 		var replyToText = document.createElement("div");
 		replyToText.classList.add("replyToNote");
 		replyToText.classList.add("metadata");
-		replyToText.innerHTML = "This is a reply. Click to see the original Tweed!";
+		replyToText.innerHTML = "This is a reply. Click to see the original Message!";
 		replyToText.onclick = function(){
 			replyToText.style.visibility = "hidden";
-			displayParentTweed(replyToIndex, parent);
+			displayParentMessage(replyToIndex, parent);
 		};
 		parent.appendChild(replyToText);
 		var br = document.createElement("BR");
 		parent.appendChild(br);
 	}
 	
-	if(retweederInfo.length != 0){
-		retweedText = document.createElement("div");
-		retweedText.classList.add("retweedtext");
-		retweedText.classList.add("metadata");
+	if(remessageerInfo.length != 0){
+		remessageText = document.createElement("div");
+		remessageText.classList.add("remessagetext");
+		remessageText.classList.add("metadata");
 		firstText = document.createElement("div");
-		firstText.innerHTML = "reTweeded by " + selectUserString(retweederInfo[0]);
-		retweedText.appendChild(firstText);
-		retweedText.appendChild(genFollowButton(retweederInfo[0][3]), retweederInfo[0][0]);
+		firstText.innerHTML = "remessageed by " + selectUserString(remessageerInfo[0]);
+		remessageText.appendChild(firstText);
+		remessageText.appendChild(genFollowButton(remessageerInfo[0][3]), remessageerInfo[0][0]);
 		secondText = document.createElement("div");
-		secondText.innerHTML = "on " + parseDate(new Date(retweederInfo[1]*1000));
-		retweedText.appendChild(secondText);
-		parent.appendChild(retweedText);
+		secondText.innerHTML = "on " + parseDate(new Date(remessageerInfo[1]*1000));
+		remessageText.appendChild(secondText);
+		parent.appendChild(remessageText);
 	}
 	
 	//Adding the text
-	tweedText = document.createElement("div");
-	tweedText.classList.add("text");
-	if(tweedString==null){
-		tweedString = "0x";
+	messageText = document.createElement("div");
+	messageText.classList.add("text");
+	if(messageString==null){
+		messageString = "0x";
 	}
 	//[{Turn image into viewable item with a button}]
-	tweedText.innerHTML = anchorme(window.web3.utils.hexToUtf8(tweedString));
-	parent.appendChild(tweedText);
+	messageText.innerHTML = anchorme(window.web3.utils.hexToUtf8(messageString));
+	parent.appendChild(messageText);
 	
 	//Adding metadata
 	metaData = document.createElement("div");
@@ -664,50 +656,50 @@ function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweed
 	favoriteNode.classList.add("favorite");
 	var img_fav = document.createElement('img');
 	img_fav.classList.add("iconUsable");
-	img_fav.id = 'img_fav' + tweedIndex;
+	img_fav.id = 'img_fav' + messageIndex;
 	if(favorited){
 		img_fav.src = "Resources/heartFull.png";
 		favoriteNode.onclick = function(){
-			unFavoriteTweed(tweedIndex);
+			unFavoriteMessage(messageIndex);
 		};
 	}
 	else{
 		img_fav.src = "Resources/heartOutline.png";
 		favoriteNode.onclick = function(){
-			favoriteTweed(tweedIndex);
+			favoriteMessage(messageIndex);
 		};
 	}
 	favoriteNode.appendChild(img_fav);
 	favcounter = document.createElement("div");
 	favcounter.innerHTML = ' x ' + favoriteCount;
-	favcounter.id = 'favCount' + tweedIndex;
+	favcounter.id = 'favCount' + messageIndex;
 	favoriteNode.appendChild(favcounter);
 	metaData.appendChild(favoriteNode);
 	
-	//reTweeds!
-	reTweedNode = document.createElement("div");
-	reTweedNode.classList.add("retweed");
-	var img_reTweed = document.createElement('img');
-	img_reTweed.classList.add("iconUsable")
-	img_reTweed.id = 'img_rt' + tweedIndex;
-	if(retweeded){
-		img_reTweed.src = "Resources/reTweedSent.png";
-		reTweedNode.onclick = function(){
-			unretweed(tweedIndex);
+	//remessages!
+	remessageNode = document.createElement("div");
+	remessageNode.classList.add("remessage");
+	var img_remessage = document.createElement('img');
+	img_remessage.classList.add("iconUsable")
+	img_remessage.id = 'img_rt' + messageIndex;
+	if(remessageed){
+		img_remessage.src = "Resources/remessageSent.png";
+		remessageNode.onclick = function(){
+			unremessage(messageIndex);
 		};
 	}
 	else{
-		img_reTweed.src = "Resources/reTweed.png";
-		reTweedNode.onclick = function(){
-			retweed(tweedIndex);
+		img_remessage.src = "Resources/remessage.png";
+		remessageNode.onclick = function(){
+			remessage(messageIndex);
 		};
 	}
-	reTweedNode.appendChild(img_reTweed);
+	remessageNode.appendChild(img_remessage);
 	rtcounter = document.createElement("div");
-	rtcounter.innerHTML = ' x ' + reTweedCount;
-	rtcounter.id = 'rtCount' + tweedIndex;
-	reTweedNode.appendChild(rtcounter);
-	metaData.appendChild(reTweedNode);
+	rtcounter.innerHTML = ' x ' + remessageCount;
+	rtcounter.id = 'rtCount' + messageIndex;
+	remessageNode.appendChild(rtcounter);
+	metaData.appendChild(remessageNode);
 	
 	//ETH Transfer
 	var transferNode = document.createElement("div");
@@ -717,7 +709,7 @@ function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweed
 	img_eth.classList.add("iconUsable")
 	transferNode.appendChild(img_eth);
 	transferNode.onclick = function(){
-		transfer(tweedIndex, parent);
+		transfer(messageIndex, parent);
 	}
 	ethcounter = document.createElement("div");
 	ethCount = web3.utils.fromWei(ethCount);
@@ -726,7 +718,7 @@ function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweed
 	}
 	ethString = ' x ' + ethCount;
 	ethcounter.innerHTML = ethString;
-	ethcounter.id = 'ethCount' + tweedIndex;
+	ethcounter.id = 'ethCount' + messageIndex;
 	transferNode.appendChild(ethcounter);
 	metaData.appendChild(transferNode);
 	
@@ -738,7 +730,7 @@ function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweed
 	shareNode.appendChild(img_share);
 	shareNode.onclick = function(){
 		var shareLink = document.createElement('textarea');
-		shareLink.value = "tweed.social/?page=tweed-" + fileIndex;
+		shareLink.value = "Communal.Network/?page=message-" + fileIndex;
 		document.body.appendChild(shareLink);
 		shareLink.select();
 		document.execCommand("copy");
@@ -770,7 +762,7 @@ function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweed
 		img_trash.classList.add("iconUsable")
 		trashNode.appendChild(img_trash);
 		trashNode.onclick = function(){
-			deleteTweed(tweedIndex);
+			deleteMessage(messageIndex);
 		};
 		metaData.appendChild(trashNode);
 	}
@@ -783,14 +775,14 @@ function generateTweedHTML(tweedString, sender, timeSent, favoriteCount, reTweed
 		repliesText.classList.add("replies");
 		repliesText.classList.add("metadata");
 		if(totalReplies == 1){
-			repliesText.innerHTML = "This Tweed has " + totalReplies + " reply! Click to view it!";
+			repliesText.innerHTML = "This message has " + totalReplies + " reply! Click to view it!";
 		}
 		else{
-			repliesText.innerHTML = "This Tweed has " + totalReplies + " replies! Click to view them!";
+			repliesText.innerHTML = "This message has " + totalReplies + " replies! Click to view them!";
 		}
 		repliesText.onclick = function(){
 			repliesText.style.visibility = "hidden";
-			loadReplyFeed(parent, tweedIndex);
+			loadReplyFeed(parent, messageIndex);
 		};
 		parent.appendChild(repliesText);
 	}
@@ -934,32 +926,30 @@ function reply(replyID, img_reply, replyNode, fileIndex, parent, stringNode){
 				alert("You aren't logged in! Please sign in to an account!")
 			}
 	mainContract.methods.sendTweedEth(toSend, fileIndex, 0).estimateGas({
-					from: account,
-					value: currentFee
+					from: account
 				})
 		.then(function(gas){
 				mainContract.methods.sendTweedEth(toSend, fileIndex, 0).send(
 				{
 					from: account,
-					gas: gas,
-					value: currentFee
+					gas: gas
 				}).on('transactionHash', function(hash){
 					hideReply(replyID, img_reply, replyNode, fileIndex, parent);
 				});
 			});
 }
 
-function deleteTweed(tweedID){
-		mainContract.methods.deleteTweed(tweedID).estimateGas(
+function deleteMessage(messageID){
+		mainContract.methods.deleteTweed(messageID).estimateGas(
 		{
 			from: account
 		}).then(function(gasEstimate){
-			mainContract.methods.deleteTweed(tweedID).send(
+			mainContract.methods.deleteTweed(messageID).send(
 			{
 				from: account,
 				gas: gasEstimate
 			}).on('transactionHash', function(hash){
-				toRemove = document.getElementsByClassName(tweedID);
+				toRemove = document.getElementsByClassName(messageID);
 				for (i = 0; i < toRemove.length; i++) { 
 					toRemove[i].style.display = "none";
 				}
@@ -987,84 +977,82 @@ function uintToString(uintArray) {
     return decodedString;
 }
 
-function favoriteTweed(tweedID){
+function favoriteMessage(messageID){
 	if(account == null){
 		alert("You aren't logged in! Please sign in to an account!")
 	}
 	else{
-		mainContract.methods.favoriteTweed(tweedID).estimateGas()
+		mainContract.methods.favoriteTweed(messageID).estimateGas()
 			.then(function(gas){
-				mainContract.methods.favoriteTweed(tweedID).send(
+				mainContract.methods.favoriteTweed(messageID).send(
 				{
 					from: account,
 					gas: gas
 				}).on('transactionHash', function(hash){
-					document.getElementById("img_fav" + tweedID).src = "Resources/heartFull.png";
-					document.getElementById('favCount' + tweedID).innerHTML = changeCount(document.getElementById('favCount' + tweedID).innerHTML, 1);
+					document.getElementById("img_fav" + messageID).src = "Resources/heartFull.png";
+					document.getElementById('favCount' + messageID).innerHTML = changeCount(document.getElementById('favCount' + messageID).innerHTML, 1);
 				});
 			}
 		);
 	}
 }
 
-function retweed(tweedID){
+function remessage(messageID){
 	if(account == null){
 		alert("You aren't logged in! Please sign in to an account!")
 	}
 	else{
-		mainContract.methods.reTweed(tweedID).estimateGas({
-					from: account,
-					value: currentFee
-				})
-			.then(function(gas){
-				mainContract.methods.reTweed(tweedID).send(
-				{
-					from: account,
-					value: currentFee,
-					gas: gas
-				}).on('transactionHash', function(hash){
-					document.getElementById("img_rt" + tweedID).src = "Resources/reTweedSent.png";
-					document.getElementById('rtCount' + tweedID).innerHTML = changeCount(document.getElementById('rtCount' + tweedID).innerHTML, 1);
-				});
-			}
-		);
-	}
-}
-
-function unretweed(tweedID){
-	if(account == null){
-		alert("You aren't logged in! Please sign in to an account!")
-	}
-	else{
-		mainContract.methods.unReTweed(tweedID).estimateGas({
+		mainContract.methods.reTweed(messageID).estimateGas({
 					from: account
 				})
 			.then(function(gas){
-				mainContract.methods.unReTweed(tweedID).send(
+				mainContract.methods.reTweed(messageID).send(
 				{
 					from: account,
 					gas: gas
 				}).on('transactionHash', function(hash){
-					document.getElementById("img_rt" + tweedID).src = "Resources/reTweed.png";
-					document.getElementById('rtCount' + tweedID).innerHTML = changeCount(document.getElementById('rtCount' + tweedID).innerHTML, -1); //[{Have changecount loop through all elements of a class]]
+					document.getElementById("img_rt" + messageID).src = "Resources/remessageSent.png";
+					document.getElementById('rtCount' + messageID).innerHTML = changeCount(document.getElementById('rtCount' + messageID).innerHTML, 1);
 				});
 			}
 		);
 	}
 }
 
-function unFavoriteTweed(tweedID){
-		mainContract.methods.unfavoriteTweed(tweedID).estimateGas(
+function unremessage(messageID){
+	if(account == null){
+		alert("You aren't logged in! Please sign in to an account!")
+	}
+	else{
+		mainContract.methods.unReTweed(messageID).estimateGas({
+					from: account
+				})
+			.then(function(gas){
+				mainContract.methods.unReTweed(messageID).send(
+				{
+					from: account,
+					gas: gas
+				}).on('transactionHash', function(hash){
+					document.getElementById("img_rt" + messageID).src = "Resources/remessage.png";
+					document.getElementById('rtCount' + messageID).innerHTML = changeCount(document.getElementById('rtCount' + messageID).innerHTML, -1); //[{Have changecount loop through all elements of a class]]
+				});
+			}
+		);
+	}
+}
+
+function unFavoriteMessage(messageID){
+		mainContract.methods.unfavoriteMessage(messageID).estimateGas(
 		{
 			from: account
 		}).then(function(gasEstimate){
-			mainContract.methods.unfavoriteTweed(tweedID).send(
+			mainContract.methods.unfavoriteMessage(messageID).send(
 			{
 				from: account,
 				gas: gasEstimate
 			}).on('transactionHash', function(hash){
-				document.getElementById("img_fav" + tweedID).src = "Resources/heartOutline.png";
-				document.getElementById('favCount' + tweedID).innerHTML = 			changeCount(document.getElementById('favCount' + tweedID).innerHTML, -1);
+				document.getElementById("img_fav" + messageID).src = "Resources/heartOutline.png";
+				document.getElementById('favCount' + messageID).innerHTML = 			changeCount(document.getElementById('favCount' + messageID).innerHTML, -1);
 			});
 		});
 }
@@ -1089,8 +1077,10 @@ var footerItems_allowSend = [false, true, true, true, false];
 function footerClick(clickedElement) {
 	var visibleDiv = '';
 	for (var i = 0; i < footerItems.length; i++) {
+		console.log(i);
 		if(footerItems[i] != clickedElement){
 			if(footerItems_correspondingDiv[i] != visibleDiv){
+				console.log(footerItems_correspondingDiv[i])
 				document.getElementById(footerItems_correspondingDiv[i]).style.display = "none";
 			}
 		}
@@ -1098,10 +1088,10 @@ function footerClick(clickedElement) {
 			visibleDiv = footerItems_correspondingDiv[i];
 			document.getElementById(footerItems_correspondingDiv[i]).style.display = "block";
 			if(footerItems_allowSend[i]){
-				document.getElementById("newTweed").style.display = "block";
+				document.getElementById("newMessage").style.display = "block";
 			}
 			else{
-				document.getElementById("newTweed").style.display = "none";
+				document.getElementById("newMessage").style.display = "none";
 			}
 		}
 	}
@@ -1127,13 +1117,13 @@ function footerClick(clickedElement) {
 }
 
 function loadUserFollowingFeed(accountToLoad){
-	document.getElementById("feed").innerHTML = '<br><br><div class="center">You came early! Tweed will be launching Your Feed shortly... For now participate in the general feed and start following cool users!</div>';
+	document.getElementById("feed").innerHTML = '<br><br><div class="center">You came early! We will be launching Your Feed shortly... For now participate in the general feed and start following cool users!</div>';
 	//[{Load a users feed here]]
 	
-	//Pull one tweed from all people being followed
-	//Sort said tweeds by time
+	//Pull one message from all people being followed
+	//Sort said messages by time
 	
-	//Load more tweeds by following up on the most recent tweeds
+	//Load more messages by following up on the most recent messages
 	
-	//Do this until max amount is loaded or no tweeds present
+	//Do this until max amount is loaded or no messages present
 }
