@@ -1,109 +1,29 @@
-# Notes:
-
-# External contract:
+# TO DO
 
 #               [[Add @ functionality (important for dms, etc.) - could be done by allowing users to initialize a file type?]]
-
-#               [[Multi file support via external contract]]
-
-#               [[Split out communal network social media aspects as a test/example of external functionality]]
-
-# [[Full audit]]
-
-###   Management Addresses   ###
-managementAddress: address
-backupAddress: address #Allow to change management address but that's it
-
-initialized: bool
 
 ###   Blank variables for safe comparisons   ###
 
 blankAddress: address
 blankUsername: bytes32
 
-### File structuring   ###
+###   Management Addresses   ###
 
-filing: public({
-        resource: bytes[1024][uint256],
-        numberOfFiles: uint256,
-        fileTypeName: uint256 #use filing w/ type 0 to store name
-} [uint256])
-firstOpenFiling: public(uint256)
+managementAddress: address
+backupAddress: address #Allow to change management address but that's it
 
-# if blank, then the filings with index uint256 can be created by anyone,
-# otherwise they can be created by anyone
-# Note that you can set this to be a smart contract which can
-# allow certain individuals to collectively control a filing,
-# or you can use this to create executable rules to determine if
-# a filing is valid.
-filingOwner: public(address[uint256])
+### Initialization lock   ###
 
-# Initial file types: [[need to initialize upon init]]
-#       0 - names, or anything really
-#       1 - Communal.network messages
+initialized: bool
 
-###   Message Struct   ###
-lastMessageNumber: public(uint256)
-message: public({
-        timeSent: timestamp,
-        senderAddress: address,
-        # The byte string filing index
-        resourceIndex: uint256,
-        fileType: uint256
-} [uint256])
-
-## Optional flags
-flags: public({
-        modifierRules: [[]],
-        flagged: bool[uint256], #message, user, or file index
-        flagName: uint256 #use filing w/ type 0 to store name
-} [uint256]) #flagType
-## Initial flags: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
-#### Messages
-### message "deleted" - 0 modifierRule: only owner can change
-### message "banned" - 1 modifierRule: only contract manager can change
-### message "mature" - 2 modifierRule: only owner can change
-#### Users
-### user deactivated - 3 modifierRule: only user can change
-### user "banned" - 4 modifierRule: only contract manager can change
-### user verified - 5 modifierRule: only contract manager can change
-
-## Optional counters
-counters: public({
-        count: uint256[uint256], #message, user, or file index
-        countName: uint256 #use filing w/ type 0 to store name
-} [uint256]) #flagType
-## Initial counts: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
-##### Messages
-#### Favorite functionality
-### messageFavoriteCount - 0 modifierRule: only changed via specific contract call
-#### Adding replies functionality
-### messageNumberOfReplies - 1 modifierRule: only changed via specific contract call
-### messageReplyIndex - 2 modifierRule: only changed via specific contract call
-#### Remessage functionality
-### messageOriginalIndex - 3 modifierRule: only changed via specific contract call # if originalIndex is not set, then it's not a remessage, otherwise it's a remessage
-### messageRemessageCount - 4 modifierRule: only changed via specific contract call
-#### Being a reply functionality
-### messageReplyToIndex - 5 # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply
-#### Transfer functionality
-### messageTotalAmount - 6 modifierRule: only changed via specific contract call
-##### Users
-### userNumberUnfollowers - 7 modifierRule: only changed via specific contract call
-### userNumberFollowers - 8 modifierRule: only changed via specific contract call
-### userNumberFollowed - 9 modifierRule: only changed via specific contract call
-### userNumberUnfollowed - 10 modifierRule: only changed via specific contract call
-### userNumberOfFavorites - 11 modifierRule: only changed via specific contract call
-### userDisplayName - 12 modifierRule: only user can change
-
-###   User Struct   ###
+###   User struct   ###
 
 user: public({
-        username: bytes32,
-        # Filing functionality
         filings: {
                 fileIndices: uint256[uint256],
                 numberOfFiles: uint256
         } [uint256],
+        username: bytes32,
         # Remessage functionality
         originalToRemessage: uint256[uint256],
         # Favorite Functionality
@@ -117,19 +37,25 @@ user: public({
         currentlyFollower: bool[address]
 } [address])
 
-###      ###
+###   Message Struct   ###
+lastMessageNumber: public(uint256)
+message: public({
+        timeSent: timestamp,
+        senderAddress: address,
+        # The byte string filing index
+        resourceIndex: uint256,
+        fileType: uint256
+} [uint256])
 
-usernameToAddress: public(address[bytes32])
-
-###   Banning   ###
+###   Deactivation functionality   ###
 
 @public
-def banFollower(toBan: address):
-        self.user[msg.sender].banned[toBan] = True
+def deactivateAccount():
+        self.user[msg.sender].deactivated = True
 
 @public
-def unbanFollower(toUnban: address):
-        self.user[msg.sender].banned[toUnban] = False
+def reactivateAccount():
+        self.user[msg.sender].deactivated = False
 
 ###   Favorite Functionality   ###
 
@@ -147,24 +73,26 @@ def unfavoriteMessage(messageIndex: uint256):
         self.user[msg.sender].currentlyFavorited[messageIndex] = False
         self.message[messageIndex].favoriteCount = self.message[messageIndex].favoriteCount - 1
 
+###   Banning followers   ###
+
+@public
+def banFollower(toBan: address):
+        self.user[msg.sender].banned[toBan] = True
+
+@public
+def unbanFollower(toUnban: address):
+        self.user[msg.sender].banned[toUnban] = False
+
+###   Username functionality   ###
+
+usernameToAddress: public(address[bytes32])
+
 @public
 @payable
 def claimUsername(username: bytes32):
 	assert self.usernameToAddress[username] == self.blankAddress and self.user[msg.sender].username == self.blankUsername
 	self.usernameToAddress[username] = msg.sender
 	self.user[msg.sender].username = username
-
-###   Deleting Functionality   ###
-
-@public
-def deleteMessage(messageIndex: uint256):
-	assert msg.sender == self.message[messageIndex].senderAddress
-	self.message[messageIndex].deleted = True
-
-@public
-def undeleteMessage(messageIndex: uint256):
-	assert msg.sender == self.message[messageIndex].senderAddress
-	self.message[messageIndex].deleted = False
 
 ###   Following functionality   ###
 
@@ -198,35 +126,25 @@ def unbanMessage(messageIndex: uint256):
 	assert msg.sender == self.managementAddress
 	self.message[messageIndex].banned = False
 
-###   Message Functionality   ###
+###   Deleting Functionality   ###
 
 @public
-def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
-        # [[Add asserts for fileType]]
-        #Message stuff
-        self.lastMessageNumber += 1
-        self.message[self.lastMessageNumber].resourceIndex = self.filing[fileType].numberOfFiles
-        self.filing[fileType].resource[self.filing[fileType].numberOfFiles] = messageString
-        self.filing[fileType].numberOfFiles += 1
-        self.message[self.lastMessageNumber].timeSent = block.timestamp
-        self.message[self.lastMessageNumber].senderAddress = sender
-        self.message[self.lastMessageNumber].fileType = fileType
-        if replyToIndex != 0:
-                self.message[self.lastMessageNumber].replyToIndex = replyToIndex
-                self.message[replyToIndex].numberOfReplies += 1
-                self.message[replyToIndex].replyIndex[self.message[replyToIndex].numberOfReplies] = self.lastMessageNumber
-        #User Stuff
-        self.user[sender].filings[fileType].fileIndices[self.user[sender].filings[fileType].numberOfFiles] = self.lastMessageNumber
-        self.user[sender].filings[fileType].numberOfFiles += 1
+def deleteMessage(messageIndex: uint256):
+	assert msg.sender == self.message[messageIndex].senderAddress
+	self.message[messageIndex].deleted = True
 
-###   Transfer Functionality   ###
+@public
+def undeleteMessage(messageIndex: uint256):
+	assert msg.sender == self.message[messageIndex].senderAddress
+	self.message[messageIndex].deleted = False
+
+###   Display name functionality   ###
 
 @public
 @payable
-def transfer(messageIndex: uint256):
-        assert messageIndex <= self.lastMessageNumber
-        self.message[messageIndex].totalAmount += msg.value
-        send(self.message[messageIndex].senderAddress, msg.value)
+def setDisplayname(displayname: bytes[1024]):
+        self.sendMessage(msg.sender, displayname, 0, 0)
+        self.user[msg.sender].displayName = self.lastMessageNumber
 
 ###   remessage Functionality   ###
 
@@ -248,14 +166,6 @@ def remessage(messageIndex: uint256):
         self.user[msg.sender].filings[self.message[_messageIndex].fileType].fileIndices[self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles] = self.lastMessageNumber
         self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles += 1
 
-###   Display name functionality   ###
-
-@public
-@payable
-def setDisplayname(displayname: bytes[1024]):
-        self.sendMessage(msg.sender, displayname, 0, 0)
-        self.user[msg.sender].displayName = self.lastMessageNumber
-
 
 #[[Rethink this]]
 @public
@@ -266,16 +176,6 @@ def unRemessage(messageIndex: uint256):
                 _messageIndex = self.message[_messageIndex].originalIndex
         self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True
         self.message[_messageIndex].remessageCount = self.message[_messageIndex].remessageCount - 1
-        
-###   Deactivation functionality   ###
-
-@public
-def deactivateAccount():
-        self.user[msg.sender].deactivated = True
-
-@public
-def reactivateAccount():
-        self.user[msg.sender].deactivated = False
 
 ###   Initialization   ###
 
@@ -298,27 +198,64 @@ def changeBackupAddress(newAddress: address):
         assert msg.sender == self.backupAddress
         self.backupAddress = newAddress
 
-### Initializing file type ###
+###   Transfer Functionality   ###
 
 @public
-def initializePublicFiling(filingName: bytes[1024]) -> uint256:
-        self.sendMessage(msg.sender, filingName, 0, 0)
-        self.filing[self.firstOpenFiling].fileTypeName = self.lastMessageNumber
-        self.firstOpenFiling += 1
-        return self.firstOpenFiling - 1
+@payable
+def transfer(messageIndex: uint256):
+        assert messageIndex <= self.lastMessageNumber
+        self.message[messageIndex].totalAmount += msg.value
+        send(self.message[messageIndex].senderAddress, msg.value)
+
+###   Message Functionality   ###
 
 @public
-def initializeControlledFiling(filingName: bytes[1024]) -> uint256:
-        self.sendMessage(msg.sender, filingName, 0, 0)
-        self.filing[self.firstOpenFiling].fileTypeName = self.lastMessageNumber
-        self.filingOwner[self.firstOpenFiling] = msg.sender
-        self.firstOpenFiling += 1
-        return self.firstOpenFiling - 1
+def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+        # [[Add asserts for fileType]]
+        #Message stuff
+        self.lastMessageNumber += 1
+        self.message[self.lastMessageNumber].resourceIndex = self.filing[fileType].numberOfFiles
+        self.filing[fileType].resource[self.filing[fileType].numberOfFiles] = messageString #[[Replace w/ external call]]
+        self.filing[fileType].numberOfFiles += 1 #[[Replace w/ external call]]
+        self.message[self.lastMessageNumber].timeSent = block.timestamp
+        self.message[self.lastMessageNumber].senderAddress = sender
+        self.message[self.lastMessageNumber].fileType = fileType
+        if replyToIndex != 0:
+                self.message[self.lastMessageNumber].replyToIndex = replyToIndex
+                self.message[replyToIndex].numberOfReplies += 1
+                self.message[replyToIndex].replyIndex[self.message[replyToIndex].numberOfReplies] = self.lastMessageNumber
+        #User Stuff
+        self.addressFilings[sender].filings[fileType].fileIndices[self.user[sender].filings[fileType].numberOfFiles] = self.lastMessageNumber # [[REWORK]]
+        self.addressFilings[sender].filings[fileType].numberOfFiles += 1 #[[REWORK]]
 
-### Changing filing owners ###
+## Initial counts: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
+##### Messages
+#### Favorite functionality
+### messageFavoriteCount - 0 modifierRule: only changed via specific contract call
+#### Adding replies functionality
+### messageNumberOfReplies - 1 modifierRule: only changed via specific contract call
+### messageReplyIndex - 2 modifierRule: only changed via specific contract call
+#### Remessage functionality
+### messageOriginalIndex - 3 modifierRule: only changed via specific contract call # if originalIndex is not set, then it's not a remessage, otherwise it's a remessage
+### messageRemessageCount - 4 modifierRule: only changed via specific contract call
+#### Being a reply functionality
+### messageReplyToIndex - 5 # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply
+#### Transfer functionality
+### messageTotalAmount - 6 modifierRule: only changed via specific contract call
+##### Users
+### userNumberUnfollowers - 7 modifierRule: only changed via specific contract call
+### userNumberFollowers - 8 modifierRule: only changed via specific contract call
+### userNumberFollowed - 9 modifierRule: only changed via specific contract call
+### userNumberUnfollowed - 10 modifierRule: only changed via specific contract call
+### userNumberOfFavorites - 11 modifierRule: only changed via specific contract call
+### userDisplayName - 12 modifierRule: only user can change
 
-@public
-def changeFilingOwner(filingIndex: uint256, newOwner: address):
-        assert msg.sender == self.filingOwner[filingIndex]
-        self.filingOwner[filingIndex] = newOwner
-
+## Initial flags: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
+#### Messages
+### message "deleted" - 0 modifierRule: only owner can change
+### message "banned" - 1 modifierRule: only contract manager can change
+### message "mature" - 2 modifierRule: only owner can change
+#### Users
+### user deactivated - 3 modifierRule: only user can change
+### user "banned" - 4 modifierRule: only contract manager can change
+### user verified - 5 modifierRule: only contract manager can change
