@@ -26,10 +26,9 @@ blankUsername: bytes32
 filing: public({
         resource: bytes[1024][uint256],
         numberOfFiles: uint256,
-        readableFileType: uint256, #use message to store name
-        initialized: bool
+        fileTypeName: uint256 #use filing w/ type 0 to store name
 } [uint256])
-lastFilingUsed: public(uint256)
+firstOpenFiling: public(uint256)
 
 # if blank, then the filings with index uint256 can be created by anyone,
 # otherwise they can be created by anyone
@@ -39,40 +38,65 @@ lastFilingUsed: public(uint256)
 # a filing is valid.
 filingOwner: public(address[uint256])
 
-# Initial file types:
+# Initial file types: [[need to initialize upon init]]
 #       0 - names (filing and user names)
 #       1 - Communal.network messages
 
 ###   Message Struct   ###
 lastMessageNumber: public(uint256)
 message: public({
-        deleted: bool, #SPLIT
-        banned: bool, #SPLIT
-        mature: bool, #SPLIT
         timeSent: timestamp,
         senderAddress: address,
         # The byte string filing index
         resourceIndex: uint256,
-        fileType: uint256,
-        # Remessage functionality
-        originalIndex: uint256, # if originalIndex is 0, then it's not a remessage, otherwise it's a remessage #SPLIT
-        remessageCount: uint256, #SPLIT
-        # Reply functionality
-        replyToIndex: uint256, # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply #SPLIT
-        # Favorite functionality
-        favoriteCount: uint256, #SPLIT
-        # Dynamic array pointing to message index
-        numberOfReplies: uint256, #SPLIT
-        replyIndex: uint256[uint256], #SPLIT
-        # TransferFunctionality
-        totalAmount: wei_value #SPLIT
+        fileType: uint256
 } [uint256])
+## Optional flags
+flags: public({
+        flagged: bool[uint256],
+        flagName: uint256 #use filing w/ type 0 to store name
+} [uint256])
+## Initial flags: [[need to initialize upon init]]
+#### Messages
+### message "deleted" - 0
+### message "banned" - 1
+### message "mature" - 2
+#### Users
+### user deactivated - 3
+### user "banned" - 4
+### user verified - 5
+
+## Optional message counters
+counters: public({
+        count: uint256[uint256],
+        countName: uint256 #use filing w/ type 0 to store name
+} [uint256])
+## Initial counts: [[need to initialize upon init]]
+##### Messages
+#### Favorite functionality
+### messageFavoriteCount - 0
+#### Adding replies functionality
+### messageNumberOfReplies - 1
+### messageReplyIndex - 2
+#### Remessage functionality
+### messageOriginalIndex - 3 # if originalIndex is not set, then it's not a remessage, otherwise it's a remessage
+### messageRemessageCount - 4
+#### Being a reply functionality
+### messageReplyToIndex - 5 # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply
+#### Transfer functionality
+### messageTotalAmount - 6
+##### Users
+### userNumberUnfollowers - 7
+### userNumberFollowers - 8
+### userNumberFollowed - 9
+### userNumberUnfollowed - 10
+### userNumberOfFavorites - 11
+### userDisplayName - 12
 
 ###   User Struct   ###
 
 user: public({
         username: bytes32,
-        displayName: uint256, #use message to store name. This is a message index.
         autoBan: bool,
         # Filing functionality
         filings: {
@@ -82,24 +106,14 @@ user: public({
         # Remessage functionality
         originalToRemessage: uint256[uint256],
         # Favorite Functionality
-        numberOfFavorites: uint256,
         favorites: uint256[uint256],
         currentlyFavorited: bool[uint256],
-        # Deactivation functionality
-        deactivated: bool,
         # The people this user is following
-        numberFollowed: uint256,
         following: address[uint256],
-        numberUnfollowed: uint256,
         currentlyFollowing: bool[address],
         # The people following this user
-        numberFollowers: uint256,
         followers: address[uint256],
-        numberUnfollowers: uint256,
-        currentlyFollower: bool[address],
-        # Banning followers
-        banned: bool[address], #[[implement]]
-        verified: bool
+        currentlyFollower: bool[address]
 } [address])
 
 ###      ###
@@ -195,8 +209,9 @@ def unbanMessage(messageIndex: uint256):
 
 ###   Message Functionality   ###
 
-@private
+@public
 def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+        # [[Add asserts for fileType]]
         #Message stuff
         self.lastMessageNumber += 1
         self.message[self.lastMessageNumber].resourceIndex = self.filing[fileType].numberOfFiles
@@ -258,7 +273,7 @@ def remessage(messageIndex: uint256):
 @public
 @payable
 def setDisplayname(displayname: bytes[1024]):
-        self.sendMessage(msg.sender, displayname, 0, 1)
+        self.sendMessage(msg.sender, displayname, 0, 0)
         self.user[msg.sender].displayName = self.lastMessageNumber
 
 
@@ -306,30 +321,19 @@ def changeBackupAddress(newAddress: address):
 ### Initializing file type ###
 
 @public
-def initializePublicFiling(filingName: bytes[1024])
+def initializePublicFiling(filingName: bytes[1024]) -> uint256:
+        self.sendMessage(msg.sender, filingName, 0, 0)
+        self.filing[self.firstOpenFiling].fileTypeName = self.lastMessageNumber
+        self.firstOpenFiling += 1
+        return self.firstOpenFiling - 1
 
 @public
-def initializeControlledFiling(filingName: bytes[1024])
-
-@private
-def setFilename(index: uint256, name: bytes[1024]):
-        self.sendMessage(msg.sender, name, 0, 1)
-        self.filing[index].readableFileType = self.lastMessageNumber
-
-filing: public({
-        resource: bytes[1024][uint256],
-        numberOfFiles: uint256,
-        readableFileType: uint256, #use message to store name
-        initialized: bool
-} [uint256])
-
-# if blank, then the filings with index uint256 can be created by anyone,
-# otherwise they can be created by anyone
-# Note that you can set this to be a smart contract which can
-# allow certain individuals to collectively control a filing,
-# or you can use this to create executable rules to determine if
-# a filing is valid.
-filingOwner: public(address[uint256])
+def initializeControlledFiling(filingName: bytes[1024]) -> uint256:
+        self.sendMessage(msg.sender, filingName, 0, 0)
+        self.filing[self.firstOpenFiling].fileTypeName = self.lastMessageNumber
+        self.filingOwner[self.firstOpenFiling] = msg.sender
+        self.firstOpenFiling += 1
+        return self.firstOpenFiling - 1
 
 ### Changing filing owners ###
 
