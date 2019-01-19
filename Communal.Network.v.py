@@ -2,16 +2,11 @@
 
 # External contract:
 
-#               [[Add ERC 20 support]]
-#               - Requires authorized external senders
-
-#               [[Add @ functionality (important for dms, etc.)]]
+#               [[Add @ functionality (important for dms, etc.) - could be done by allowing users to initialize a file type?]]
 
 #               [[Multi file support via external contract]]
 
-# [[Full audit]] functionality
-
-# [[Test - Authorized external sender]]
+# [[Full audit]]
 
 ###   Management Addresses   ###
 managementAddress: address
@@ -31,12 +26,22 @@ blankUsername: bytes32
 filing: public({
         resource: bytes[1024][uint256],
         numberOfFiles: uint256,
-        readableFileType: uint256 #use message to store name
+        readableFileType: uint256, #use message to store name
+        initialized: bool
 } [uint256])
+lastFilingUsed: public(uint256)
+
+# if blank, then the filings with index uint256 can be created by anyone,
+# otherwise they can be created by anyone
+# Note that you can set this to be a smart contract which can
+# allow certain individuals to collectively control a filing,
+# or you can use this to create executable rules to determine if
+# a filing is valid.
+filingOwner: public(address[uint256])
 
 # Initial file types:
-#       0 - message
-#       1 - name (username, whatever)
+#       0 - names (filing and user names)
+#       1 - Communal.network messages
 
 ###   Message Struct   ###
 lastMessageNumber: public(uint256)
@@ -298,11 +303,38 @@ def changeBackupAddress(newAddress: address):
         assert msg.sender == self.backupAddress
         self.backupAddress = newAddress
 
-###   Setting File type names   ###
+### Initializing file type ###
 
 @public
+def initializePublicFiling(filingName: bytes[1024])
+
+@public
+def initializeControlledFiling(filingName: bytes[1024])
+
+@private
 def setFilename(index: uint256, name: bytes[1024]):
-        assert msg.sender == self.managementAddress
         self.sendMessage(msg.sender, name, 0, 1)
         self.filing[index].readableFileType = self.lastMessageNumber
+
+filing: public({
+        resource: bytes[1024][uint256],
+        numberOfFiles: uint256,
+        readableFileType: uint256, #use message to store name
+        initialized: bool
+} [uint256])
+
+# if blank, then the filings with index uint256 can be created by anyone,
+# otherwise they can be created by anyone
+# Note that you can set this to be a smart contract which can
+# allow certain individuals to collectively control a filing,
+# or you can use this to create executable rules to determine if
+# a filing is valid.
+filingOwner: public(address[uint256])
+
+### Changing filing owners ###
+
+@public
+def changeFilingOwner(filingIndex: uint256, newOwner: address):
+        assert msg.sender == self.filingOwner[filingIndex]
+        self.filingOwner[filingIndex] = newOwner
 

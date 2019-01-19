@@ -602,7 +602,7 @@ function generateMessageHTML(messageString, sender, timeSent, favoriteCount, rem
 		replyToText.classList.add("metadata");
 		replyToText.innerHTML = "This is a reply. Click to see the original Message!";
 		replyToText.onclick = function(){
-			replyToText.style.visibility = "hidden";
+			replyToText.style.display = "none";
 			displayParentMessage(replyToIndex, parent);
 		};
 		parent.appendChild(replyToText);
@@ -637,19 +637,6 @@ function generateMessageHTML(messageString, sender, timeSent, favoriteCount, rem
 	//Adding metadata
 	metaData = document.createElement("div");
 	metaData.classList.add("metadata");
-	
-	//Sender info
-	user = document.createElement("div");
-	user.classList.add("user");
-	user.innerHTML = "From: " + selectUserString(sender);
-	user.appendChild(genFollowButton(sender[3], sender[0]));
-	metaData.appendChild(user);
-	
-	readableDate = parseDate(new Date(timeSent*1000));
-	timeNode = document.createElement("div");
-	timeNode.classList.add("time");
-	timeNode.appendChild(document.createTextNode("Sent: " + readableDate));
-	metaData.appendChild(timeNode);
 	
 	//Favorites!
 	favoriteNode = document.createElement("div");
@@ -769,6 +756,21 @@ function generateMessageHTML(messageString, sender, timeSent, favoriteCount, rem
 	
 	parent.appendChild(metaData);
 	
+	//Sender info
+	user = document.createElement("div");
+	user.classList.add("user");
+	user.innerHTML = "From: " + selectUserString(sender);
+	user.appendChild(genFollowButton(sender[3], sender[0]));
+	metaData.appendChild(user);
+	
+	readableDate = parseDate(new Date(timeSent*1000));
+	timeNode = document.createElement("div");
+	timeNode.classList.add("time");
+	timeNode.appendChild(document.createTextNode("Sent: " + readableDate));
+	metaData.appendChild(timeNode);
+	
+	
+	
 	if(totalReplies != 0){
 		parent.classList.add("displayReplies");
 		var repliesText = document.createElement("div");
@@ -781,7 +783,7 @@ function generateMessageHTML(messageString, sender, timeSent, favoriteCount, rem
 			repliesText.innerHTML = "This message has " + totalReplies + " replies! Click to view them!";
 		}
 		repliesText.onclick = function(){
-			repliesText.style.visibility = "hidden";
+			repliesText.style.display = "none";
 			loadReplyFeed(parent, messageIndex);
 		};
 		parent.appendChild(repliesText);

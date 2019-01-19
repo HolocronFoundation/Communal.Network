@@ -1,13 +1,46 @@
 /* CSS Document */
 
-/* Height notes */
-/* 9.5vh = height of logo */
-/* 1.5vh + font height + 3px */
-/* 2vh + font height = height of quotes */
-/* */
-/* */
-/* */
-/* */
+button {
+	font-family: 'Thasadith', sans-serif;
+	padding: .5em;
+	border: double;
+	background: rgba(255,255,255,.8);
+	border-color: rgba(33,118,255,.8);
+	color: rgba(33,118,255,.8);
+}
+button:hover {
+	cursor: pointer;
+	background: rgba(33,118,255,.4);
+	color: rgba(33,118,255,.95);
+	border-color: rgba(33,118,255,.95);
+}
+
+/* width */
+::-webkit-scrollbar {
+  	width: 10px;
+	border: double;
+	border-color: rgba(33,118,255,.8);
+}
+
+/* Track */
+::-webkit-scrollbar-track {
+  	background: rgba(33,118,255,.4); 
+}
+::-webkit-scrollbar-track:hover {
+  	background: rgba(33,118,255,.6); 
+}
+ 
+/* Handle */
+::-webkit-scrollbar-thumb {
+  	background: rgba(215,38,61,.4);
+	border: double;
+	border-color: rgba(215,38,61,.8);
+}
+
+/* Handle on hover */
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(215,38,61,.6);
+}
 
 @keyframes slideUp {
 	0% {
@@ -145,8 +178,7 @@ ul {
 	border-radius: 3vh;
 	padding-left: 1vw;
 	padding-right: 1vw;
-	padding-bottom: 1vh;
-	padding-top: 1vh;
+	padding-top: .2vh;
 	text-align: center;
 	animation: 1s slideUp;
 	background-color: rgba(214,230,255,0.80);
@@ -161,12 +193,12 @@ ul {
 }
 
 .metadata div.user, .metadata div.time {
-	display: block;
-	margin: .5em;
+	display: inline-block;
+	margin-top: .1em;
 }
 
 .iconUsable {
-	height: 1.5em;
+	height: 1.1em;
 }
 
 div.favorite, div.reply, div.remessage, div.trash, .replyToNote, .followUser, div.transfer, .replies, div.share {
@@ -195,6 +227,8 @@ div.favorite:hover, div.reply:hover, div.remessage:hover, div.trash:hover, .repl
 
 .displayReply {
 	padding-top: 0;
+	padding-left: .5vw;
+	padding-right: .5vw;
 }
 
 .displayReplies {
@@ -204,7 +238,6 @@ div.favorite:hover, div.reply:hover, div.remessage:hover, div.trash:hover, .repl
 /* Combine these somehow? */
 div.replyToNote {
 	margin-top: 0;
-	margin-bottom: .5em;
 	border: dotted;
 	border-top: none;
 	border-width: 1px;
@@ -237,8 +270,6 @@ div.replies {
 div.displayReplies div.message {
 	border-top-style: dotted;
 	border-bottom-style: none;
-	padding-left: 0;
-	padding-right: 0;
 	border-width: 1px;
 	animation: 1s slideUp;
 }
@@ -248,11 +279,10 @@ div.displayReplies div.message div.replyToNote{
 }
 
 .text {
-	margin: .3em;
 	font-size: 1.1em;
 	text-align: left;
 	white-space: pre-wrap;
-	height: 4.2em;
+	height: 3.5em;
 	overflow-y: auto;
 	resize: vertical;
 	display: inline-block;
@@ -279,8 +309,8 @@ div.displayReplies div.message div.replyToNote{
 	margin-top: calc(.5em + 2em + 1em + .5em + 4px + 1.5vh + 2em);
 	overflow-y: auto;
 	overflow-x: hidden;
-	height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 2.5em);
-	max-height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 2.5em); /* [[Need to calculate]] */
+	height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 3em - 6px);
+	max-height: calc(100vh - .5em - 2em - 1em - .5em - 3px - 1.5vh - 1.5em - 4em - 3em - 6px)); /* [[Need to calculate]] */
 	border-bottom-right-radius: 10vh;
 	border-bottom-left-radius: 10vh;
 	background-color: rgba(0,7,45,.4);
@@ -289,6 +319,11 @@ div.displayReplies div.message div.replyToNote{
 	border-color: rgba(33,118,255,.8);
 	border-bottom-style: double;
 	border-top-style: double;
+	resize: horizontal;
+	max-width: 90vw;
+	min-width: 25vw;
+	margin-left: auto;
+	margin-right: auto;
 }
 
 .media {
@@ -308,11 +343,8 @@ textarea {
     padding: .5em 1em;
     resize: vertical;
 	min-height: 3em;
-}
-
-button {
-	border-width: 1px;
-	padding: .5em;
+	background-color: rgba(255,255,255,.9);
+	border-color: rgba(33,118,255,.8);
 }
 
 textarea.stringInputBox {
@@ -367,12 +399,18 @@ header {
 		margin-right: calc(10vw - 6px - 1em);
     	margin-left: calc(10vw - 6px - 1em);
 	}
+	#feed {
+		width: 85vw;
+	}
 }
 /* Landscape */
 @media screen and (orientation:landscape) {
 	.content {
 		margin-right: calc(25vw - 6px - 1em);
     	margin-left: calc(25vw - 6px - 1em);
+	}
+	#feed {
+		width: 65vw;
 	}
 }
 
