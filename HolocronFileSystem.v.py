@@ -8,71 +8,140 @@
 
 # [[Full audit]]
 
+###   Blank variable for safe comparisons   ###
+
+blankAddress: address
+
 ### File structuring   ###
 
-filing: public({
+files: public({
         resource: bytes[1024][uint256],
         numberOfFiles: uint256,
-        fileTypeName: uint256 #use filing w/ type 0 to store name
+        name: uint256, #use file w/ type 0 to store name
+        owner: address
 } [uint256])
-firstOpenFiling: public(uint256)
-
-# if blank, then the filings with index uint256 can be created by anyone,
+firstOpenFile: public(uint256)
+# if owner is blank, then the file with index uint256 can be created by anyone,
 # otherwise they can be created by anyone
 # Note that you can set this to be a smart contract which can
-# allow certain individuals to collectively control a filing,
+# allow certain individuals to collectively control a file type,
 # or you can use this to create executable rules to determine if
-# a filing is valid.
-filingOwner: public(address[uint256])
+# a file is valid.
 
 # Initial file types: [[need to initialize upon init]]
-#       0 - names, or anything really
-#       1 - Communal.network messages
-
-############################# [[Add ownership to flags]]
+#       0 - internal names, publicly appendable
 
 ## Optional flags
 flags: public({
-        modifierRules: [[]],
+        modifierAddress: address, # if not set, can be anyone #[[Add check for not set address]]
         flagged: bool[uint256], #message, user, or file index
-        flagName: uint256 #use filing w/ type 0 to store name
+        name: uint256, #use file w/ type 0 to store name
+        owner: address
 } [uint256]) #flagType
+firstOpenFlag: public(uint256)
 
 ## Optional counters
 counters: public({
+        modifierAddress: address, # if not set, can be anyone #[[Add check for not set address]]
         count: uint256[uint256], #message, user, or file index
-        countName: uint256 #use filing w/ type 0 to store name
+        name: uint256, #use file w/ type 0 to store name
+        owner: address
+        # [[Add individual owners
 } [uint256]) #flagType
+firstOpenCounter: public(uint256)
 
-###   Message Functionality   ###
+###   File Functionality   ###
 
 @public
 def addFile(file: bytes[1024], fileType: uint256):
-        # [[Add asserts for fileType]]
-        self.filing[fileType].resource[self.filing[fileType].numberOfFiles] = messageString
-        self.filing[fileType].numberOfFiles += 1
+        assert fileType < self.firstOpenFile and (self.files[fileType].owner == blankAddress or self.files[fileType].owner == msg.sender)
+        self.files[fileType].resource[self.files[fileType].numberOfFiles] = messageString
+        self.files[fileType].numberOfFiles += 1
 
-### Initializing file type ###
-
-@public
-def initializePublicFiling(filingName: bytes[1024]) -> uint256:
-        self.sendMessage(msg.sender, filingName, 0, 0)
-        self.filing[self.firstOpenFiling].fileTypeName = self.lastMessageNumber
-        self.firstOpenFiling += 1
-        return self.firstOpenFiling - 1
+###   Initializing file type   ###
 
 @public
-def initializeControlledFiling(filingName: bytes[1024]) -> uint256:
-        self.sendMessage(msg.sender, filingName, 0, 0)
-        self.filing[self.firstOpenFiling].fileTypeName = self.lastMessageNumber
-        self.filingOwner[self.firstOpenFiling] = msg.sender
-        self.firstOpenFiling += 1
-        return self.firstOpenFiling - 1
-
-### Changing filing owners ###
+def initializePublicFile(fileName: bytes[1024]) -> uint256:
+        self.files[self.firstOpenFile].name = self.files[0].numberOfFiles
+        self.addFile(fileName, 0)
+        self.firstOpenFile += 1
+        return self.firstOpenFile - 1
 
 @public
-def changeFilingOwner(filingIndex: uint256, newOwner: address):
-        assert msg.sender == self.filingOwner[filingIndex]
-        self.filingOwner[filingIndex] = newOwner
+def initializeControlledFile(fileName: bytes[1024]) -> uint256:
+        self.files[self.firstOpenFile].name = self.files[0].numberOfFiles
+        self.addFile(fileName, 0)
+        self.files[self.firstOpenFile].owner = msg.sender
+        self.firstOpenFile += 1
+        return self.firstOpenFile - 1
 
+###   Changing file owners   ###
+
+@public
+def changeFileOwner(fileIndex: uint256, newOwner: address):
+        assert msg.sender == self.files[filesIndex].owner
+        self.files[filesIndex].owner = newOwner
+
+
+###   Flag Functionality   ###
+
+@public
+def addFlag(flag: bool, flagType: uint256):
+        assert flagType < self.firstOpenFlag and (self.flags[flagType].owner == blankAddress or self.flags[flagType].owner == msg.sender)
+        self.files[flagType].resource[self.files[flagType].numberOfFiles] = messageString
+
+###   Initializing flag type   ###
+
+@public
+def initializePublicFlag(flagName: bytes[1024]) -> uint256:
+        self.flags[self.firstOpenFlag].name = self.files[0].numberOfFiles
+        self.addFile(flagName, 0)
+        self.firstOpenFlag += 1
+        return self.firstOpenFlag - 1
+
+@public
+def initializeControlledFlag(fileName: bytes[1024]) -> uint256:
+        self.flags[self.firstOpenFlag].name = self.files[0].numberOfFiles
+        self.addFile(fileName, 0)
+        self.flags[self.firstOpenFlag].owner = msg.sender
+        self.firstOpenFlag += 1
+        return self.firstOpenFlag - 1
+
+###   Changing flag owners   ###
+
+@public
+def changeFlagOwner(flagIndex: uint256, newOwner: address):
+        assert msg.sender == self.flags[flagIndex].owner
+        self.flags[flagIndex].owner = newOwner
+
+
+###   Counter Functionality   ###
+
+@public
+def addCounter(counter: bool, counterType: uint256):
+        assert counterType < self.firstOpenCounter and (self.counters[counterType].owner == blankAddress or self.counters[counterType].owner == msg.sender)
+        self.files[counterType].resource[self.files[counterType].numberOfFiles] = messageString
+
+###   Initializing counter type   ###
+
+@public
+def initializePublicCounter(counterName: bytes[1024]) -> uint256:
+        self.counters[self.firstOpenCounter].name = self.files[0].numberOfFiles
+        self.addFile(counterName, 0)
+        self.firstOpenCounter += 1
+        return self.firstOpenCounter - 1
+
+@public
+def initializeControlledCounter(fileName: bytes[1024]) -> uint256:
+        self.counters[self.firstOpenCounter].name = self.files[0].numberOfFiles
+        self.addFile(fileName, 0)
+        self.counters[self.firstOpenCounter].owner = msg.sender
+        self.firstOpenCounter += 1
+        return self.firstOpenCounter - 1
+
+###   Changing counter owners   ###
+
+@public
+def changeCounterOwner(counterIndex: uint256, newOwner: address):
+        assert msg.sender == self.counters[counterIndex].owner
+        self.counters[counterIndex].owner = newOwner

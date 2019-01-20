@@ -2,6 +2,10 @@
 
 #               [[Add @ functionality (important for dms, etc.) - could be done by allowing users to initialize a file type?]]
 
+###   External contract info   ###
+
+contract CommunalFileSystem:
+
 ###   Blank variables for safe comparisons   ###
 
 blankAddress: address
