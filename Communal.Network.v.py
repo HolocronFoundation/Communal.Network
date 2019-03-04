@@ -4,7 +4,7 @@
 
 ###   External contract info   ###
 
-contract CommunalFileSystem:
+contract Phoenix:
 
 ###   Blank variables for safe comparisons   ###
 
@@ -181,15 +181,6 @@ def unRemessage(messageIndex: uint256):
         self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True
         self.message[_messageIndex].remessageCount = self.message[_messageIndex].remessageCount - 1
 
-###   Initialization   ###
-
-@public
-def __init__():
-        assert not self.initialized
-        self.managementAddress = 0x877769a9FC3a3154F19270bF951DEa39ef8628Cf
-        self.backupAddress = 0x51CE88B114c959aCB729e0a4899E9D9CccEEB69e
-        self.initialized = True
-
 ###   Management Functions   ###
 
 @public
@@ -232,27 +223,66 @@ def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint2
         self.addressFilings[sender].filings[fileType].fileIndices[self.user[sender].filings[fileType].numberOfFiles] = self.lastMessageNumber # [[REWORK]]
         self.addressFilings[sender].filings[fileType].numberOfFiles += 1 #[[REWORK]]
 
-## Initial counts: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
-##### Messages
-#### Favorite functionality
-### messageFavoriteCount - 0 modifierRule: only changed via specific contract call
-#### Adding replies functionality
-### messageNumberOfReplies - 1 modifierRule: only changed via specific contract call
-### messageReplyIndex - 2 modifierRule: only changed via specific contract call
-#### Remessage functionality
-### messageOriginalIndex - 3 modifierRule: only changed via specific contract call # if originalIndex is not set, then it's not a remessage, otherwise it's a remessage
-### messageRemessageCount - 4 modifierRule: only changed via specific contract call
-#### Being a reply functionality
-### messageReplyToIndex - 5 # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply
-#### Transfer functionality
-### messageTotalAmount - 6 modifierRule: only changed via specific contract call
-##### Users
-### userNumberUnfollowers - 7 modifierRule: only changed via specific contract call
-### userNumberFollowers - 8 modifierRule: only changed via specific contract call
-### userNumberFollowed - 9 modifierRule: only changed via specific contract call
-### userNumberUnfollowed - 10 modifierRule: only changed via specific contract call
-### userNumberOfFavorites - 11 modifierRule: only changed via specific contract call
-### userDisplayName - 12 modifierRule: only user can change
+###   Initialization   ###
+
+@public
+def __init__():
+        assert not self.initialized
+        self.managementAddress = 0x877769a9FC3a3154F19270bF951DEa39ef8628Cf
+        self.backupAddress = 0x51CE88B114c959aCB729e0a4899E9D9CccEEB69e
+        self.initialized = True
+
+        # Initializing the file system
+        self.controlledFileIndex = self.Phoenix.initializeControlledFile("Communal.Network")
+
+        # Initializing the counters
+        self.messageFavoriteCountCounterIndex = self.Phoenix.initializeControlledFlag("messageFavoriteCount")
+        self.messageNumberOfRepliesCounterIndex = self.Phoenix.initializeControlledFlag("messageNumberOfReplies")
+        self.messageReplyIndexCounterIndex = self.Phoenix.initializeControlledFlag("messageReplyIndex")
+        self.messageOriginalIndex = self.Phoenix.initializeControlledFlag("messageOriginalIndex")
+        self.messageRemessageCount = self.Phoenix.initializeControlledFlag("messageRemessageCount")
+        self.messageReplyToIndex = self.Phoenix.initializeControlledFlag("messageReplyToIndex")
+        self.messageTotalAmount = self.Phoenix.initializeControlledFlag("messageTotalAmount")
+        self.userNumberUnfollowers = self.Phoenix.initializeControlledFlag("userNumberUnfollowers")
+        self.userNumberFollowers = self.Phoenix.initializeControlledFlag("userNumberFollowers")
+        self.userNumberFollowed = self.Phoenix.initializeControlledFlag("userNumberFollowed")
+        self.userNumberUnfollowed = self.Phoenix.initializeControlledFlag("userNumberUnfollowed")
+        self.userNumberOfFavorites = self.Phoenix.initializeControlledFlag("userNumberOfFavorites")
+        self.userDisplayName = self.Phoenix.initializeControlledFlag("userDisplayName")
+
+        # Initializing the flags
+        self.messageDeletedFlagIndex = self.Phoenix.initializeControlledCounter("messageDeleted")
+        self.messageBannedFlagIndex = self.Phoenix.initializeControlledCounter("messageBanned")
+        self.messageMatureFlagIndex = self.Phoenix.initializeControlledCounter("messageMature")
+        self.userDeactivatedIndex = self.Phoenix.initializeControlledCounter("userDeactivated")
+        self.userBannedIndex = self.Phoenix.initializeControlledCounter("userBanned")
+        self.userVerifiedIndex = self.Phoenix.initializeControlledCounter("userVerified")
+        
+
+controlledFileIndex: public(uint256) # The index in phoenix of the files of Communal.Network
+
+# Counter indices in Phoenix
+messageFavoriteCountCounterIndex: public(uint256)
+messageNumberOfRepliesCounterIndex: public(uint256)
+messageReplyIndexCounterIndex: public(uint256)
+messageOriginalIndex: public(uint256)
+messageRemessageCount: public(uint256)
+messageReplyToIndex: public(uint256)
+messageTotalAmount: public(uint256)
+userNumberUnfollowers: public(uint256)
+userNumberFollowers: public(uint256)
+userNumberFollowed: public(uint256)
+userNumberUnfollowed: public(uint256)
+userNumberOfFavorites: public(uint256)
+userDisplayName: public(uint256)
+
+# Flag indices in Phoenix
+messageDeletedFlagIndex: public(uint256)
+messageBannedFlagIndex: public(uint256)
+messageMatureFlagIndex: public(uint256)
+userDeactivatedIndex: public(uint256)
+userBannedIndex: public(uint256)
+userVerifiedIndex: public(uint256)
 
 ## Initial flags: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
 #### Messages
