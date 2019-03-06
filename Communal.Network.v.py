@@ -5,6 +5,11 @@
 ###   External contract info   ###
 
 contract Phoenix:
+    def initializeControlledFile(name: bytes[1024]) -> uint256: modifying
+    def initializeControlledFlag(name: bytes[1024]) -> uint256: modifying
+    def initializeControlledCounter(name: bytes[1024]) -> uint256: modifying
+
+Phoenix: Phoenix
 
 ###   Blank variables for safe comparisons   ###
 
@@ -41,6 +46,8 @@ user: public({
         currentlyFollower: bool[address]
 } [address])
 
+usernameToAddress: public(address[bytes32])
+
 ###   Message Struct   ###
 lastMessageNumber: public(uint256)
 message: public({
@@ -50,6 +57,42 @@ message: public({
         resourceIndex: uint256,
         fileType: uint256
 } [uint256])
+
+controlledFileIndex: public(uint256) # The index in phoenix of the files of Communal.Network
+
+# Counter indices in Phoenix
+messageFavoriteCountCounterIndex: public(uint256)
+messageNumberOfRepliesCounterIndex: public(uint256)
+messageReplyIndexCounterIndex: public(uint256)
+messageOriginalIndex: public(uint256)
+messageRemessageCount: public(uint256)
+messageReplyToIndex: public(uint256)
+messageTotalAmount: public(uint256)
+userNumberUnfollowers: public(uint256)
+userNumberFollowers: public(uint256)
+userNumberFollowed: public(uint256)
+userNumberUnfollowed: public(uint256)
+userNumberOfFavorites: public(uint256)
+userDisplayName: public(uint256)
+
+# Flag indices in Phoenix
+messageDeletedFlagIndex: public(uint256)
+messageBannedFlagIndex: public(uint256)
+messageMatureFlagIndex: public(uint256)
+userDeactivatedIndex: public(uint256)
+userBannedIndex: public(uint256)
+userVerifiedIndex: public(uint256)
+
+## Initial flags: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
+#### Messages
+### message "deleted" - 0 modifierRule: only owner can change
+### message "banned" - 1 modifierRule: only contract manager can change
+### message "mature" - 2 modifierRule: only owner can change
+#### Users
+### user deactivated - 3 modifierRule: only user can change
+### user "banned" - 4 modifierRule: only contract manager can change
+### user verified - 5 modifierRule: only contract manager can change
+
 
 ###   Deactivation functionality   ###
 
@@ -88,8 +131,6 @@ def unbanFollower(toUnban: address):
         self.user[msg.sender].banned[toUnban] = False
 
 ###   Username functionality   ###
-
-usernameToAddress: public(address[bytes32])
 
 @public
 @payable
@@ -258,38 +299,3 @@ def __init__():
         self.userBannedIndex = self.Phoenix.initializeControlledCounter("userBanned")
         self.userVerifiedIndex = self.Phoenix.initializeControlledCounter("userVerified")
         
-
-controlledFileIndex: public(uint256) # The index in phoenix of the files of Communal.Network
-
-# Counter indices in Phoenix
-messageFavoriteCountCounterIndex: public(uint256)
-messageNumberOfRepliesCounterIndex: public(uint256)
-messageReplyIndexCounterIndex: public(uint256)
-messageOriginalIndex: public(uint256)
-messageRemessageCount: public(uint256)
-messageReplyToIndex: public(uint256)
-messageTotalAmount: public(uint256)
-userNumberUnfollowers: public(uint256)
-userNumberFollowers: public(uint256)
-userNumberFollowed: public(uint256)
-userNumberUnfollowed: public(uint256)
-userNumberOfFavorites: public(uint256)
-userDisplayName: public(uint256)
-
-# Flag indices in Phoenix
-messageDeletedFlagIndex: public(uint256)
-messageBannedFlagIndex: public(uint256)
-messageMatureFlagIndex: public(uint256)
-userDeactivatedIndex: public(uint256)
-userBannedIndex: public(uint256)
-userVerifiedIndex: public(uint256)
-
-## Initial flags: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
-#### Messages
-### message "deleted" - 0 modifierRule: only owner can change
-### message "banned" - 1 modifierRule: only contract manager can change
-### message "mature" - 2 modifierRule: only owner can change
-#### Users
-### user deactivated - 3 modifierRule: only user can change
-### user "banned" - 4 modifierRule: only contract manager can change
-### user verified - 5 modifierRule: only contract manager can change
