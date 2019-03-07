@@ -5,6 +5,14 @@
 ###   External contract info   ###
 
 contract Phoenix:
+    
+    def addFlag(flag: bool, flagType: uint256, flagIndex: uint256): modifying
+    
+    def incrementCounter(increment: uint256, counterType: uint256, counterIndex: uint256): modifying
+    def decrementCounter(decrement: uint256, counterType: uint256, counterIndex: uint256): modifying
+    
+    def getCount(index: uint256) -> uint256: constant
+    
     def initializeControlledFile(name: bytes[1024]) -> uint256: modifying
     def initializeControlledFlag(name: bytes[1024]) -> uint256: modifying
     def initializeControlledCounter(name: bytes[1024]) -> uint256: modifying
@@ -98,11 +106,11 @@ userVerifiedIndex: public(uint256)
 
 @public
 def deactivateAccount():
-        self.user[msg.sender].deactivated = True
-
+        self.Phoenix.addFlag(True, self.userDeactivatedIndex, 0) #[[convert msg.sender to uint256 and replace 0
+        
 @public
 def reactivateAccount():
-        self.user[msg.sender].deactivated = False
+        self.Phoenix.addFlag(False, self.userDeactivatedIndex, 0) #[[convert msg.sender to uint256 and replace 0
 
 ###   Favorite Functionality   ###
 
@@ -110,15 +118,15 @@ def reactivateAccount():
 def favoriteMessage(messageIndex: uint256):
         assert not self.user[msg.sender].currentlyFavorited[messageIndex] and messageIndex <= self.lastMessageNumber
         self.user[msg.sender].currentlyFavorited[messageIndex] = True
-        self.message[messageIndex].favoriteCount += 1
-        self.user[msg.sender].favorites[self.user[msg.sender].numberOfFavorites] = messageIndex
-        self.user[msg.sender].numberOfFavorites += 1
+        self.Phoenix.incrementCounter(1, self.messageFavoriteCountCounterIndex, messageIndex) #[[Really, really double check security]
+        self.user[msg.sender].favorites[self.Phoenix.getCount(0)] = messageIndex #[[convert msg.sender to uint256 and replace 0
+        self.Phoenix.incrementCounter(1, self.userNumberOfFavorites, 0) #[[convert msg.sender to uint256 and replace 0
 
 @public
 def unfavoriteMessage(messageIndex: uint256):
         assert self.user[msg.sender].currentlyFavorited[messageIndex]
         self.user[msg.sender].currentlyFavorited[messageIndex] = False
-        self.message[messageIndex].favoriteCount = self.message[messageIndex].favoriteCount - 1
+        self.Phoenix.decrementCounter(1, self.messageFavoriteCountCounterIndex, messageIndex) #[[Really, really double check security]
 
 ###   Banning followers   ###
 
