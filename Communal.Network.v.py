@@ -1,25 +1,23 @@
+message: event({messageIndex: indexed(uint256), sender: indexed(address), messageContent: bytes[32]})
 
 lastMessageNumber: public(uint256)
 externalSenderAuthorization: bool[address][address] # bool - T if authorized external sender | address - external address | address - user address
 
-###   Message Functionality   ###
-message: event({messageIndex: indexed(uint256), sender: indexed(address), messageContent: bytes32, additionalMessageContent: bytes32})
-
 @private
-def sendMessage(sender: address, messageContent: bytes32, additionalMessageContent: bytes32):
-        log.message(self.lastMessageNumber, sender, messageContent, additionalMessageContent)
+def sendMessage(sender: address, messageContent: bytes[32]):
+        log.message(self.lastMessageNumber, sender, messageContent)
         self.lastMessageNumber += 1
 
 @public
 @payable
-def sendMessageUser(messageString: bytes32, additionalMessageContent: bytes32):
-        self.sendMessage(msg.sender, messageString, additionalMessageContent)
+def sendMessageUser(messageString: bytes[32]):
+        self.sendMessage(msg.sender, messageString)
 
 @public
 @payable
-def sendMessageExternalUser(_sender: address, messageString: bytes32, additionalMessageContent: bytes32):
+def sendMessageExternalUser(_sender: address, messageString: bytes[32]):
         assert self.externalSenderAuthorization[msg.sender][_sender]
-        self.sendMessage(_sender, messageString, additionalMessageContent: bytes32)
+        self.sendMessage(_sender, messageString)
 
 ###
 
@@ -30,4 +28,3 @@ def authorizeSender(sender: address):
 @public
 def deauthorizeSender(sender: address):
         self.externalSenderAuthorization[sender][msg.sender] = False
-
