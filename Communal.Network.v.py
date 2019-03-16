@@ -89,15 +89,14 @@ user: public({
         numberFollowers: uint256,
         followers: address[uint256],
         numberUnfollowers: uint256,
-        currentlyFollower: bool[address],
-        # Banning followers
-        banned: bool[address], #[[implement]]
-        verified: bool
+        currentlyFollower: bool[address]
 } [address])
 
 ###      ###
 
 usernameToAddress: public(address[bytes32])
+
+###
 
 @public
 def authorizeSender(sender: address):
@@ -109,31 +108,7 @@ def deauthorizeSender(sender: address):
         assert msg.sender == self.managementAddress
         self.externalSenderAuthorization[sender] = False
 
-###   Banning   ###
-
-@public
-def banFollower(toBan: address):
-        self.user[msg.sender].banned[toBan] = True
-
-@public
-def unbanFollower(toUnban: address):
-        self.user[msg.sender].banned[toUnban] = False
-
-###   Favorite Functionality   ###
-
-@public
-def favoriteMessage(messageIndex: uint256):
-        assert not self.user[msg.sender].currentlyFavorited[messageIndex] and messageIndex <= self.lastMessageNumber
-        self.user[msg.sender].currentlyFavorited[messageIndex] = True
-        self.message[messageIndex].favoriteCount += 1
-        self.user[msg.sender].favorites[self.user[msg.sender].numberOfFavorites] = messageIndex
-        self.user[msg.sender].numberOfFavorites += 1
-
-@public
-def unfavoriteMessage(messageIndex: uint256):
-        assert self.user[msg.sender].currentlyFavorited[messageIndex]
-        self.user[msg.sender].currentlyFavorited[messageIndex] = False
-        self.message[messageIndex].favoriteCount = self.message[messageIndex].favoriteCount - 1
+###
 
 @public
 @payable
