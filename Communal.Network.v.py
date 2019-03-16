@@ -58,9 +58,7 @@ message: public({
         favoriteCount: uint256, #SPLIT
         # Dynamic array pointing to message index
         numberOfReplies: uint256, #SPLIT
-        replyIndex: uint256[uint256], #SPLIT
-        # TransferFunctionality
-        totalAmount: wei_value #SPLIT
+        replyIndex: uint256[uint256] #SPLIT
 } [uint256])
 
 ###   User Struct   ###
@@ -208,15 +206,6 @@ def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint2
         #User Stuff
         self.user[sender].filings[fileType].fileIndices[self.user[sender].filings[fileType].numberOfFiles] = self.lastMessageNumber
         self.user[sender].filings[fileType].numberOfFiles += 1
-
-###   Transfer Functionality   ###
-
-@public
-@payable
-def transfer(messageIndex: uint256):
-        assert messageIndex <= self.lastMessageNumber
-        self.message[messageIndex].totalAmount += msg.value
-        send(self.message[messageIndex].senderAddress, msg.value)
 
 @public
 @payable
