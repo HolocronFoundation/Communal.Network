@@ -1,0 +1,7 @@
+Removed items that could be reimplemented via JS:
+
+- Autoban
+
+Other removed items:
+
+- Administrator addresses - will reimplement as developer donation addresses and give essentially no power over day to day usage

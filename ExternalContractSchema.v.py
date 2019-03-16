@@ -10,6 +10,41 @@ contract CommunalNetwork:
 
 CommunalNetwork: Communal.Network
 
+###   Username functionality   ###
+addressToUsername: public(bytes32[address])
+usernameToAddress: public(address[bytes32])
+
+@public
+@payable
+def claimUsername(username: bytes32):
+	assert self.usernameToAddress[username] == ZERO_ADDRESS
+	self.usernameToAddress[username] = msg.sender
+	if self.addressToUsername[msg.sender] != ZERO_ADDRESS:
+                self.usernameToAddress[self.addressToUsername[msg.sender]] = ZERO_ADDRESS
+	self.addressToUsername[msg.sender] = username
+
+###   Display name functionality   ###
+
+# [[To fix]]
+
+@public
+@payable
+def setDisplayname(displayname: bytes[1024]):
+        self.sendMessage(msg.sender, displayname, 0, 1)
+        self.user[msg.sender].displayName = self.lastMessageNumber
+
+###   Deactivation functionality   ###
+
+deactivated: bool[address]
+
+@public
+def deactivateAccount():
+        self.deactivated[msg.sender] = True
+
+@public
+def reactivateAccount():
+        self.deactivated[msg.sender] = False
+
 ###   Transfer Functionality   ###
 transfer: event({sender: indexed(address), messageIndex: indexed(uint256), amount: wei_value})
 

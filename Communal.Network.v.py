@@ -13,17 +13,10 @@
 
 # [[Test - Authorized external sender]]
 
-###   Management Addresses   ###
-managementAddress: address
-backupAddress: address #Allow to change management address but that's it
-
-initialized: bool
-
-externalSenderAuthorization: bool[address]
+externalSenderAuthorization: bool[address][address] # bool - T if authorized external sender | address - external address | address - user address
 
 ###   Blank variables for safe comparisons   ###
 
-blankAddress: address
 blankUsername: bytes32
 
 ### File structuring   ###
@@ -60,8 +53,6 @@ message: public({
 
 user: public({
         username: bytes32,
-        displayName: uint256, #use message to store name. This is a message index.
-        autoBan: bool,
         # Filing functionality
         filings: {
                 fileIndices: uint256[uint256],
@@ -69,8 +60,6 @@ user: public({
         } [uint256],
         # Remessage functionality
         originalToRemessage: uint256[uint256],
-        # Deactivation functionality
-        deactivated: bool,
         # The people this user is following
         numberFollowed: uint256,
         following: address[uint256],
@@ -83,30 +72,15 @@ user: public({
         currentlyFollower: bool[address]
 } [address])
 
-###      ###
-
-usernameToAddress: public(address[bytes32])
-
 ###
 
 @public
 def authorizeSender(sender: address):
-        assert msg.sender == self.managementAddress
-        self.externalSenderAuthorization[sender] = True
+        self.externalSenderAuthorization[sender][msg.sender] = True
 
 @public
 def deauthorizeSender(sender: address):
-        assert msg.sender == self.managementAddress
-        self.externalSenderAuthorization[sender] = False
-
-###
-
-@public
-@payable
-def claimUsername(username: bytes32):
-	assert self.usernameToAddress[username] == self.blankAddress and self.user[msg.sender].username == self.blankUsername
-	self.usernameToAddress[username] = msg.sender
-	self.user[msg.sender].username = username
+        self.externalSenderAuthorization[sender][msg.sender] = False
 
 ###   Following functionality   ###
 
@@ -140,7 +114,6 @@ def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint2
         self.message[self.lastMessageNumber].timeSent = block.timestamp
         self.message[self.lastMessageNumber].senderAddress = sender
         self.message[self.lastMessageNumber].fileType = fileType
-        self.message[self.lastMessageNumber].banned = self.user[sender].autoBan #[[banned no longer exists]]
         if replyToIndex != 0:
                 self.message[self.lastMessageNumber].replyToIndex = replyToIndex
                 self.message[replyToIndex].numberOfReplies += 1
@@ -151,12 +124,12 @@ def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint2
 
 @public
 @payable
-def sendMessageEth(messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+def sendMessageUser(messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
         self.sendMessage(msg.sender, messageString, replyToIndex, fileType)
 
 @public
-def sendMessageExternal(_sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
-        assert self.externalSenderAuthorization[msg.sender]
+def sendMessageExternalUser(_sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+        assert self.externalSenderAuthorization[msg.sender][_sender]
         self.sendMessage(_sender, messageString, replyToIndex, fileType)
 
 ###   remessage Functionality   ###
@@ -179,14 +152,6 @@ def remessage(messageIndex: uint256):
         self.user[msg.sender].filings[self.message[_messageIndex].fileType].fileIndices[self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles] = self.lastMessageNumber
         self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles += 1
 
-###   Display name functionality   ###
-
-@public
-@payable
-def setDisplayname(displayname: bytes[1024]):
-        self.sendMessage(msg.sender, displayname, 0, 1)
-        self.user[msg.sender].displayName = self.lastMessageNumber
-
 
 #[[Rethink this]]
 @public
@@ -197,37 +162,6 @@ def unRemessage(messageIndex: uint256):
                 _messageIndex = self.message[_messageIndex].originalIndex
         self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True #[[deleted no longer exists]]
         self.message[_messageIndex].remessageCount = self.message[_messageIndex].remessageCount - 1
-        
-###   Deactivation functionality   ###
-
-@public
-def deactivateAccount():
-        self.user[msg.sender].deactivated = True
-
-@public
-def reactivateAccount():
-        self.user[msg.sender].deactivated = False
-
-###   Initialization   ###
-
-@public
-def __init__():
-        assert not self.initialized
-        self.managementAddress = 0x877769a9FC3a3154F19270bF951DEa39ef8628Cf
-        self.backupAddress = 0x51CE88B114c959aCB729e0a4899E9D9CccEEB69e
-        self.initialized = True
-
-###   Management Functions   ###
-
-@public
-def changeManagementAddress(newAddress: address):
-        assert msg.sender == self.managementAddress or msg.sender == self.backupAddress
-        self.managementAddress = newAddress
-
-@public
-def changeBackupAddress(newAddress: address):
-        assert msg.sender == self.backupAddress
-        self.backupAddress = newAddress
 
 ###   Setting File type names   ###
 
