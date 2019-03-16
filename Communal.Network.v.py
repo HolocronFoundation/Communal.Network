@@ -1,134 +1,117 @@
-# TO DO
+# Notes:
 
-#               [[Add @ functionality (important for dms, etc.) - could be done by allowing users to initialize a file type?]]
+# External contract:
 
-###   External contract info   ###
+#               [[Add ERC 20 support]]
+#               - Requires authorized external senders
 
-contract Phoenix:
-    
-    def addFlag(flag: bool, flagType: uint256, flagIndex: uint256): modifying
-    
-    def incrementCounter(increment: uint256, counterType: uint256, counterIndex: uint256): modifying
-    def decrementCounter(decrement: uint256, counterType: uint256, counterIndex: uint256): modifying
-    
-    def getCount(index: uint256) -> uint256: constant
-    
-    def initializeControlledFile(name: bytes[1024]) -> uint256: modifying
-    def initializeControlledFlag(name: bytes[1024]) -> uint256: modifying
-    def initializeControlledCounter(name: bytes[1024]) -> uint256: modifying
+#               [[Add @ functionality (important for dms, etc.)]]
 
-Phoenix: Phoenix
+#               [[Multi file support via external contract]]
+
+# [[Full audit]] functionality
+
+# [[Test - Authorized external sender]]
+
+###   Management Addresses   ###
+managementAddress: address
+backupAddress: address #Allow to change management address but that's it
+
+initialized: bool
+
+externalSenderAuthorization: bool[address]
 
 ###   Blank variables for safe comparisons   ###
 
 blankAddress: address
 blankUsername: bytes32
 
-###   Management Addresses   ###
+### File structuring   ###
 
-managementAddress: address
-backupAddress: address #Allow to change management address but that's it
+filing: public({
+        resource: bytes[1024][uint256],
+        numberOfFiles: uint256,
+        readableFileType: uint256 #use message to store name
+} [uint256])
 
-### Initialization lock   ###
-
-initialized: bool
-
-###   User struct   ###
-
-user: public({
-        filings: {
-                fileIndices: uint256[uint256],
-                numberOfFiles: uint256
-        } [uint256],
-        username: bytes32,
-        # Remessage functionality
-        originalToRemessage: uint256[uint256],
-        # Favorite Functionality
-        favorites: uint256[uint256],
-        currentlyFavorited: bool[uint256],
-        # The people this user is following
-        following: address[uint256],
-        currentlyFollowing: bool[address],
-        # The people following this user
-        followers: address[uint256],
-        currentlyFollower: bool[address]
-} [address])
-
-usernameToAddress: public(address[bytes32])
+# Initial file types:
+#       0 - message
+#       1 - name (username, whatever)
 
 ###   Message Struct   ###
 lastMessageNumber: public(uint256)
 message: public({
+        deleted: bool, #SPLIT
+        banned: bool, #SPLIT
+        mature: bool, #SPLIT
         timeSent: timestamp,
         senderAddress: address,
         # The byte string filing index
         resourceIndex: uint256,
-        fileType: uint256
+        fileType: uint256,
+        # Remessage functionality
+        originalIndex: uint256, # if originalIndex is 0, then it's not a remessage, otherwise it's a remessage #SPLIT
+        remessageCount: uint256, #SPLIT
+        # Reply functionality
+        replyToIndex: uint256, # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply #SPLIT
+        # Favorite functionality
+        favoriteCount: uint256, #SPLIT
+        # Dynamic array pointing to message index
+        numberOfReplies: uint256, #SPLIT
+        replyIndex: uint256[uint256], #SPLIT
+        # TransferFunctionality
+        totalAmount: wei_value #SPLIT
 } [uint256])
 
-controlledFileIndex: public(uint256) # The index in phoenix of the files of Communal.Network
+###   User Struct   ###
 
-# Counter indices in Phoenix
-messageFavoriteCountCounterIndex: public(uint256)
-messageNumberOfRepliesCounterIndex: public(uint256)
-messageReplyIndexCounterIndex: public(uint256)
-messageOriginalIndex: public(uint256)
-messageRemessageCount: public(uint256)
-messageReplyToIndex: public(uint256)
-messageTotalAmount: public(uint256)
-userNumberUnfollowers: public(uint256)
-userNumberFollowers: public(uint256)
-userNumberFollowed: public(uint256)
-userNumberUnfollowed: public(uint256)
-userNumberOfFavorites: public(uint256)
-userDisplayName: public(uint256)
+user: public({
+        username: bytes32,
+        displayName: uint256, #use message to store name. This is a message index.
+        autoBan: bool,
+        # Filing functionality
+        filings: {
+                fileIndices: uint256[uint256],
+                numberOfFiles: uint256
+        } [uint256],
+        # Remessage functionality
+        originalToRemessage: uint256[uint256],
+        # Favorite Functionality
+        numberOfFavorites: uint256,
+        favorites: uint256[uint256],
+        currentlyFavorited: bool[uint256],
+        # Deactivation functionality
+        deactivated: bool,
+        # The people this user is following
+        numberFollowed: uint256,
+        following: address[uint256],
+        numberUnfollowed: uint256,
+        currentlyFollowing: bool[address],
+        # The people following this user
+        numberFollowers: uint256,
+        followers: address[uint256],
+        numberUnfollowers: uint256,
+        currentlyFollower: bool[address],
+        # Banning followers
+        banned: bool[address], #[[implement]]
+        verified: bool
+} [address])
 
-# Flag indices in Phoenix
-messageDeletedFlagIndex: public(uint256)
-messageBannedFlagIndex: public(uint256)
-messageMatureFlagIndex: public(uint256)
-userDeactivatedIndex: public(uint256)
-userBannedIndex: public(uint256)
-userVerifiedIndex: public(uint256)
+###      ###
 
-## Initial flags: [[need to initialize upon init]] [[need to create creation function]] [[***need to secure]]
-#### Messages
-### message "deleted" - 0 modifierRule: only owner can change
-### message "banned" - 1 modifierRule: only contract manager can change
-### message "mature" - 2 modifierRule: only owner can change
-#### Users
-### user deactivated - 3 modifierRule: only user can change
-### user "banned" - 4 modifierRule: only contract manager can change
-### user verified - 5 modifierRule: only contract manager can change
-
-
-###   Deactivation functionality   ###
-
-@public
-def deactivateAccount():
-        self.Phoenix.addFlag(True, self.userDeactivatedIndex, 0) #[[convert msg.sender to uint256 and replace 0
-        
-@public
-def reactivateAccount():
-        self.Phoenix.addFlag(False, self.userDeactivatedIndex, 0) #[[convert msg.sender to uint256 and replace 0
-
-###   Favorite Functionality   ###
+usernameToAddress: public(address[bytes32])
 
 @public
-def favoriteMessage(messageIndex: uint256):
-        assert not self.user[msg.sender].currentlyFavorited[messageIndex] and messageIndex <= self.lastMessageNumber
-        self.user[msg.sender].currentlyFavorited[messageIndex] = True
-        self.Phoenix.incrementCounter(1, self.messageFavoriteCountCounterIndex, messageIndex) #[[Really, really double check security]
-        self.user[msg.sender].favorites[self.Phoenix.getCount(0)] = messageIndex #[[convert msg.sender to uint256 and replace 0
-        self.Phoenix.incrementCounter(1, self.userNumberOfFavorites, 0) #[[convert msg.sender to uint256 and replace 0
+def authorizeSender(sender: address):
+        assert msg.sender == self.managementAddress
+        self.externalSenderAuthorization[sender] = True
 
 @public
-def unfavoriteMessage(messageIndex: uint256):
-        assert self.user[msg.sender].currentlyFavorited[messageIndex]
-        self.user[msg.sender].currentlyFavorited[messageIndex] = False
-        self.Phoenix.decrementCounter(1, self.messageFavoriteCountCounterIndex, messageIndex) #[[Really, really double check security]
+def deauthorizeSender(sender: address):
+        assert msg.sender == self.managementAddress
+        self.externalSenderAuthorization[sender] = False
 
-###   Banning followers   ###
+###   Banning   ###
 
 @public
 def banFollower(toBan: address):
@@ -138,7 +121,21 @@ def banFollower(toBan: address):
 def unbanFollower(toUnban: address):
         self.user[msg.sender].banned[toUnban] = False
 
-###   Username functionality   ###
+###   Favorite Functionality   ###
+
+@public
+def favoriteMessage(messageIndex: uint256):
+        assert not self.user[msg.sender].currentlyFavorited[messageIndex] and messageIndex <= self.lastMessageNumber
+        self.user[msg.sender].currentlyFavorited[messageIndex] = True
+        self.message[messageIndex].favoriteCount += 1
+        self.user[msg.sender].favorites[self.user[msg.sender].numberOfFavorites] = messageIndex
+        self.user[msg.sender].numberOfFavorites += 1
+
+@public
+def unfavoriteMessage(messageIndex: uint256):
+        assert self.user[msg.sender].currentlyFavorited[messageIndex]
+        self.user[msg.sender].currentlyFavorited[messageIndex] = False
+        self.message[messageIndex].favoriteCount = self.message[messageIndex].favoriteCount - 1
 
 @public
 @payable
@@ -146,6 +143,18 @@ def claimUsername(username: bytes32):
 	assert self.usernameToAddress[username] == self.blankAddress and self.user[msg.sender].username == self.blankUsername
 	self.usernameToAddress[username] = msg.sender
 	self.user[msg.sender].username = username
+
+###   Deleting Functionality   ###
+
+@public
+def deleteMessage(messageIndex: uint256):
+	assert msg.sender == self.message[messageIndex].senderAddress
+	self.message[messageIndex].deleted = True
+
+@public
+def undeleteMessage(messageIndex: uint256):
+	assert msg.sender == self.message[messageIndex].senderAddress
+	self.message[messageIndex].deleted = False
 
 ###   Following functionality   ###
 
@@ -179,25 +188,45 @@ def unbanMessage(messageIndex: uint256):
 	assert msg.sender == self.managementAddress
 	self.message[messageIndex].banned = False
 
-###   Deleting Functionality   ###
+###   Message Functionality   ###
 
-@public
-def deleteMessage(messageIndex: uint256):
-	assert msg.sender == self.message[messageIndex].senderAddress
-	self.message[messageIndex].deleted = True
+@private
+def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+        #Message stuff
+        self.lastMessageNumber += 1
+        self.message[self.lastMessageNumber].resourceIndex = self.filing[fileType].numberOfFiles
+        self.filing[fileType].resource[self.filing[fileType].numberOfFiles] = messageString
+        self.filing[fileType].numberOfFiles += 1
+        self.message[self.lastMessageNumber].timeSent = block.timestamp
+        self.message[self.lastMessageNumber].senderAddress = sender
+        self.message[self.lastMessageNumber].fileType = fileType
+        self.message[self.lastMessageNumber].banned = self.user[sender].autoBan
+        if replyToIndex != 0:
+                self.message[self.lastMessageNumber].replyToIndex = replyToIndex
+                self.message[replyToIndex].numberOfReplies += 1
+                self.message[replyToIndex].replyIndex[self.message[replyToIndex].numberOfReplies] = self.lastMessageNumber
+        #User Stuff
+        self.user[sender].filings[fileType].fileIndices[self.user[sender].filings[fileType].numberOfFiles] = self.lastMessageNumber
+        self.user[sender].filings[fileType].numberOfFiles += 1
 
-@public
-def undeleteMessage(messageIndex: uint256):
-	assert msg.sender == self.message[messageIndex].senderAddress
-	self.message[messageIndex].deleted = False
-
-###   Display name functionality   ###
+###   Transfer Functionality   ###
 
 @public
 @payable
-def setDisplayname(displayname: bytes[1024]):
-        self.sendMessage(msg.sender, displayname, 0, 0)
-        self.user[msg.sender].displayName = self.lastMessageNumber
+def transfer(messageIndex: uint256):
+        assert messageIndex <= self.lastMessageNumber
+        self.message[messageIndex].totalAmount += msg.value
+        send(self.message[messageIndex].senderAddress, msg.value)
+
+@public
+@payable
+def sendMessageEth(messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+        self.sendMessage(msg.sender, messageString, replyToIndex, fileType)
+
+@public
+def sendMessageExternal(_sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
+        assert self.externalSenderAuthorization[msg.sender]
+        self.sendMessage(_sender, messageString, replyToIndex, fileType)
 
 ###   remessage Functionality   ###
 
@@ -219,6 +248,14 @@ def remessage(messageIndex: uint256):
         self.user[msg.sender].filings[self.message[_messageIndex].fileType].fileIndices[self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles] = self.lastMessageNumber
         self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles += 1
 
+###   Display name functionality   ###
+
+@public
+@payable
+def setDisplayname(displayname: bytes[1024]):
+        self.sendMessage(msg.sender, displayname, 0, 1)
+        self.user[msg.sender].displayName = self.lastMessageNumber
+
 
 #[[Rethink this]]
 @public
@@ -229,6 +266,25 @@ def unRemessage(messageIndex: uint256):
                 _messageIndex = self.message[_messageIndex].originalIndex
         self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True
         self.message[_messageIndex].remessageCount = self.message[_messageIndex].remessageCount - 1
+        
+###   Deactivation functionality   ###
+
+@public
+def deactivateAccount():
+        self.user[msg.sender].deactivated = True
+
+@public
+def reactivateAccount():
+        self.user[msg.sender].deactivated = False
+
+###   Initialization   ###
+
+@public
+def __init__():
+        assert not self.initialized
+        self.managementAddress = 0x877769a9FC3a3154F19270bF951DEa39ef8628Cf
+        self.backupAddress = 0x51CE88B114c959aCB729e0a4899E9D9CccEEB69e
+        self.initialized = True
 
 ###   Management Functions   ###
 
@@ -242,68 +298,10 @@ def changeBackupAddress(newAddress: address):
         assert msg.sender == self.backupAddress
         self.backupAddress = newAddress
 
-###   Transfer Functionality   ###
+###   Setting File type names   ###
 
 @public
-@payable
-def transfer(messageIndex: uint256):
-        assert messageIndex <= self.lastMessageNumber
-        self.message[messageIndex].totalAmount += msg.value
-        send(self.message[messageIndex].senderAddress, msg.value)
-
-###   Message Functionality   ###
-
-@public
-def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint256, fileType: uint256):
-        # [[Add asserts for fileType]]
-        #Message stuff
-        self.lastMessageNumber += 1
-        self.message[self.lastMessageNumber].resourceIndex = self.filing[fileType].numberOfFiles
-        self.filing[fileType].resource[self.filing[fileType].numberOfFiles] = messageString #[[Replace w/ external call]]
-        self.filing[fileType].numberOfFiles += 1 #[[Replace w/ external call]]
-        self.message[self.lastMessageNumber].timeSent = block.timestamp
-        self.message[self.lastMessageNumber].senderAddress = sender
-        self.message[self.lastMessageNumber].fileType = fileType
-        if replyToIndex != 0:
-                self.message[self.lastMessageNumber].replyToIndex = replyToIndex
-                self.message[replyToIndex].numberOfReplies += 1
-                self.message[replyToIndex].replyIndex[self.message[replyToIndex].numberOfReplies] = self.lastMessageNumber
-        #User Stuff
-        self.addressFilings[sender].filings[fileType].fileIndices[self.user[sender].filings[fileType].numberOfFiles] = self.lastMessageNumber # [[REWORK]]
-        self.addressFilings[sender].filings[fileType].numberOfFiles += 1 #[[REWORK]]
-
-###   Initialization   ###
-
-@public
-def __init__():
-        assert not self.initialized
-        self.managementAddress = 0x877769a9FC3a3154F19270bF951DEa39ef8628Cf
-        self.backupAddress = 0x51CE88B114c959aCB729e0a4899E9D9CccEEB69e
-        self.initialized = True
-
-        # Initializing the file system
-        self.controlledFileIndex = self.Phoenix.initializeControlledFile("Communal.Network")
-
-        # Initializing the counters
-        self.messageFavoriteCountCounterIndex = self.Phoenix.initializeControlledFlag("messageFavoriteCount")
-        self.messageNumberOfRepliesCounterIndex = self.Phoenix.initializeControlledFlag("messageNumberOfReplies")
-        self.messageReplyIndexCounterIndex = self.Phoenix.initializeControlledFlag("messageReplyIndex")
-        self.messageOriginalIndex = self.Phoenix.initializeControlledFlag("messageOriginalIndex")
-        self.messageRemessageCount = self.Phoenix.initializeControlledFlag("messageRemessageCount")
-        self.messageReplyToIndex = self.Phoenix.initializeControlledFlag("messageReplyToIndex")
-        self.messageTotalAmount = self.Phoenix.initializeControlledFlag("messageTotalAmount")
-        self.userNumberUnfollowers = self.Phoenix.initializeControlledFlag("userNumberUnfollowers")
-        self.userNumberFollowers = self.Phoenix.initializeControlledFlag("userNumberFollowers")
-        self.userNumberFollowed = self.Phoenix.initializeControlledFlag("userNumberFollowed")
-        self.userNumberUnfollowed = self.Phoenix.initializeControlledFlag("userNumberUnfollowed")
-        self.userNumberOfFavorites = self.Phoenix.initializeControlledFlag("userNumberOfFavorites")
-        self.userDisplayName = self.Phoenix.initializeControlledFlag("userDisplayName")
-
-        # Initializing the flags
-        self.messageDeletedFlagIndex = self.Phoenix.initializeControlledCounter("messageDeleted")
-        self.messageBannedFlagIndex = self.Phoenix.initializeControlledCounter("messageBanned")
-        self.messageMatureFlagIndex = self.Phoenix.initializeControlledCounter("messageMature")
-        self.userDeactivatedIndex = self.Phoenix.initializeControlledCounter("userDeactivated")
-        self.userBannedIndex = self.Phoenix.initializeControlledCounter("userBanned")
-        self.userVerifiedIndex = self.Phoenix.initializeControlledCounter("userVerified")
-        
+def setFilename(index: uint256, name: bytes[1024]):
+        assert msg.sender == self.managementAddress
+        self.sendMessage(msg.sender, name, 0, 1)
+        self.filing[index].readableFileType = self.lastMessageNumber
