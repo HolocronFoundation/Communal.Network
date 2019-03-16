@@ -10,6 +10,10 @@ contract CommunalNetwork:
 
 CommunalNetwork: Communal.Network
 
+###   Reply functionality   ###
+
+# [[To do]]
+
 ###   Username functionality   ###
 addressToUsername: public(bytes32[address])
 usernameToAddress: public(address[bytes32])
@@ -142,3 +146,58 @@ def banFollower(toBan: address):
 def unbanFollower(toUnban: address):
         assert self.bannedFollowers[toBan][msg.sender]
         self.bannedFollowers[tounBan][msg.sender] = False
+
+#   Following functionality   #
+
+# [[REWORK THIS]]
+
+@public
+def follow(toFollow: address):
+        assert not self.user[msg.sender].currentlyFollowing[toFollow]
+        self.user[msg.sender].currentlyFollowing[toFollow] = True
+        self.user[msg.sender].following[self.user[msg.sender].numberFollowed] = toFollow
+        self.user[msg.sender].numberFollowed += 1
+        self.user[toFollow].followers[self.user[toFollow].numberFollowers] = msg.sender
+        self.user[toFollow].currentlyFollower[msg.sender] = True
+        self.user[toFollow].numberFollowers += 1
+
+@public
+def unfollow(toUnfollow: address):
+        assert self.user[msg.sender].currentlyFollowing[toUnfollow]
+        self.user[msg.sender].currentlyFollowing[toUnfollow] = False
+        self.user[msg.sender].numberUnfollowed += 1
+        self.user[toUnfollow].currentlyFollower[msg.sender] = False
+        self.user[toUnfollow].numberUnfollowers += 1
+
+###   remessage Functionality   ###
+
+# [[REWORK ALL OF THIS]]
+
+@public
+@payable
+def remessage(messageIndex: uint256):
+        # Pulls the original message index in case the remessage is a remessage of a remessage
+        _messageIndex: uint256 = messageIndex
+        if self.message[_messageIndex].originalIndex != 0:
+                _messageIndex = self.message[_messageIndex].originalIndex
+        assert not self.message[_messageIndex].deleted and not self.message[_messageIndex].banned #[[deleted no longer exists, neither does banned]]
+        assert self.user[msg.sender].originalToRemessage[_messageIndex] == 0 or self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted
+        self.lastMessageNumber += 1
+        self.user[msg.sender].originalToRemessage[_messageIndex] = self.lastMessageNumber
+        self.message[self.lastMessageNumber].timeSent = block.timestamp
+        self.message[self.lastMessageNumber].senderAddress = msg.sender
+        self.message[self.lastMessageNumber].originalIndex = _messageIndex
+        self.message[_messageIndex].remessageCount += 1
+        self.user[msg.sender].filings[self.message[_messageIndex].fileType].fileIndices[self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles] = self.lastMessageNumber
+        self.user[msg.sender].filings[self.message[_messageIndex].fileType].numberOfFiles += 1
+
+
+#[[Rethink this]]
+@public
+def unRemessage(messageIndex: uint256):
+        # Pulls the original message index in case the remessage is a remessage of a remessage
+        _messageIndex: uint256 = messageIndex
+        if self.message[_messageIndex].originalIndex != 0:
+                _messageIndex = self.message[_messageIndex].originalIndex
+        self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True #[[deleted no longer exists]]
+        self.message[_messageIndex].remessageCount = self.message[_messageIndex].remessageCount - 1
