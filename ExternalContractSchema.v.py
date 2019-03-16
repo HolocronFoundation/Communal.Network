@@ -11,51 +11,86 @@ contract CommunalNetwork:
 CommunalNetwork: Communal.Network
 
 ###   Transfer Functionality   ###
-
-totalAmount: wei_value[uint256]
+transfer: event({sender: indexed(address), messageIndex: indexed(uint256), amount: wei_value})
 
 @public
 @payable
 def transfer(messageIndex: uint256):
         assert messageIndex <= self.CommunalNetwork.getLastMessageNumber()
-        self.totalAmount[messageIndex] += msg.value
         send(self.CommunalNetwork.getSenderAddress(messageIndex), msg.value)
 
+###   Deleting Functionality   ###
+deleted: bool[uint256] # bool - deleted | uint256 - message index
+
+@public
+def deleteMessage(messageIndex: uint256):
+	assert msg.sender == getSenderAddress(messageIndex)
+	self.deleted[messageIndex] = True
+
+@public
+def undeleteMessage(messageIndex: uint256):
+	assert msg.sender == getSenderAddress(messageIndex)
+	self.deleted[messageIndex] = False
+
 ###   Favorite Functionality   ###
+favorite: event({favoriteBy: indexed(address), messageIndex: indexed(uint256)})
+unfavorite: event({unfavoriteBy: indexed(address), messageIndex: indexed(uint256)})
 
 favoritedByUser: bool[uint256][address] #bool - T if favorited, F if not | uint256 - messageIndex | address - user who favorited a given message
-favoriteCount: uint256[uint256] #uint256 - count | uint256 - messageIndex
+# Note that favorite count and messages a user have favorited can be reconstructed using JS copmbined with events
 
 @public
 def favoriteMessage(messageIndex: uint256):
         assert messageIndex <= self.CommunalNetwork.getLastMessageNumber()
         assert not self.favoritedByUser[messageIndex][msg.sender]
         self.favoritedByUser[messageIndex][msg.sender] = True
-        self.favoriteCount[messageIndex] += 1
-        self.user[msg.sender].favorites[self.user[msg.sender].numberOfFavorites] = messageIndex #[[work]]
-        self.user[msg.sender].numberOfFavorites += 1 #[[work]]
+        log.favorite(msg.sender, messageIndex)
 
 @public
 def unfavoriteMessage(messageIndex: uint256):
         assert self.favoritedByUser[messageIndex][msg.sender]
         self.favoritedByUser[messageIndex][msg.sender] = False
-        self.favoriteCount[messageIndex] = self.favoriteCount[messageIndex] - 1
+        log.unfavorite(msg.sender, messageIndex)
 
 ###   Verified user Functionality   ###
+verify: event({verifiedBy: indexed(address), user: indexed(address)})
+unverify: event({unverifiedBy: indexed(address), user: indexed(address)})
 
-administrator: address
-
-verifiedUser: bool[address]
+verifiedByUser: bool[address][address] #bool - T if verified, F if not | address - user who was verified | address - user who verified a user
 
 @public
 def verifyUser(toVerify: address):
-        assert msg.sender == self.administrator
-        self.verifiedUser[toVerify] = True
+        assert not self.verifiedByUser[toVerify][msg.sender]
+        self.verifiedByUser[toVerify][msg.sender] = True
+        log.verify(msg.sender, messageIndex)
 
 @public
-def verifyUser(toUnverify: address):
-        assert msg.sender == self.administrator
-        self.verifiedUser[toVerify] = False
+def unverifyUser(toUnverify: address):
+        assert self.verifiedByUser[toVerify][msg.sender]
+        self.verifiedByUser[toVerify][msg.sender] = False
+        log.unverify(msg.sender, messageIndex)
+
+###   Banning Message Functionality   ###
+messageBanned: event({bannedBy: indexed(address), message: indexed(uint256)})
+messageUnbanned: event({unbannedBy: indexed(address), message: indexed(uint256)})
+
+messageBannedByUser: bool[uint256][address] #bool - T if verified, F if not | uint256 - message which was banned | address - user who banned a user
+
+@public
+def banMessage(messageIndex: uint256):
+        assert not self.messageBannedByUser[messageIndex][msg.sender]
+	self.messageBannedByUser[messageIndex][msg.sender] = True
+	log.messageBanned(msg.sender, messageIndex)
+
+@public
+def unbanMessage(messageIndex: uint256):
+        assert self.messageBannedByUser[messageIndex][msg.sender]
+	self.messageBannedByUser[messageIndex][msg.sender] = False
+	log.messageUnbanned(msg.sender, messageIndex)
+
+###   Mature/NSFW Functionality   ###
+
+# [[To do]]
 
 ###   Feed Functionality   ###
 
@@ -65,8 +100,10 @@ bannedFollowers: bool[address][address]
 
 @public
 def banFollower(toBan: address):
+        assert not self.bannedFollowers[toBan][msg.sender]
         self.bannedFollowers[toBan][msg.sender] = True
 
 @public
 def unbanFollower(toUnban: address):
+        assert self.bannedFollowers[toBan][msg.sender]
         self.bannedFollowers[tounBan][msg.sender] = False

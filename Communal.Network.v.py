@@ -41,9 +41,6 @@ filing: public({
 ###   Message Struct   ###
 lastMessageNumber: public(uint256)
 message: public({
-        deleted: bool, #SPLIT
-        banned: bool, #SPLIT
-        mature: bool, #SPLIT
         timeSent: timestamp,
         senderAddress: address,
         # The byte string filing index
@@ -54,8 +51,6 @@ message: public({
         remessageCount: uint256, #SPLIT
         # Reply functionality
         replyToIndex: uint256, # Reply: if replyToIndex is 0, then it's not a reply, otherwise it's a reply #SPLIT
-        # Favorite functionality
-        favoriteCount: uint256, #SPLIT
         # Dynamic array pointing to message index
         numberOfReplies: uint256, #SPLIT
         replyIndex: uint256[uint256] #SPLIT
@@ -74,10 +69,6 @@ user: public({
         } [uint256],
         # Remessage functionality
         originalToRemessage: uint256[uint256],
-        # Favorite Functionality
-        numberOfFavorites: uint256,
-        favorites: uint256[uint256],
-        currentlyFavorited: bool[uint256],
         # Deactivation functionality
         deactivated: bool,
         # The people this user is following
@@ -117,18 +108,6 @@ def claimUsername(username: bytes32):
 	self.usernameToAddress[username] = msg.sender
 	self.user[msg.sender].username = username
 
-###   Deleting Functionality   ###
-
-@public
-def deleteMessage(messageIndex: uint256):
-	assert msg.sender == self.message[messageIndex].senderAddress
-	self.message[messageIndex].deleted = True
-
-@public
-def undeleteMessage(messageIndex: uint256):
-	assert msg.sender == self.message[messageIndex].senderAddress
-	self.message[messageIndex].deleted = False
-
 ###   Following functionality   ###
 
 @public
@@ -149,18 +128,6 @@ def unfollow(toUnfollow: address):
         self.user[toUnfollow].currentlyFollower[msg.sender] = False
         self.user[toUnfollow].numberUnfollowers += 1
 
-###   Banning Functionality   ###
-
-@public
-def banMessage(messageIndex: uint256):
-	assert msg.sender == self.managementAddress
-	self.message[messageIndex].banned = True
-
-@public
-def unbanMessage(messageIndex: uint256):
-	assert msg.sender == self.managementAddress
-	self.message[messageIndex].banned = False
-
 ###   Message Functionality   ###
 
 @private
@@ -173,7 +140,7 @@ def sendMessage(sender: address, messageString: bytes[1024], replyToIndex: uint2
         self.message[self.lastMessageNumber].timeSent = block.timestamp
         self.message[self.lastMessageNumber].senderAddress = sender
         self.message[self.lastMessageNumber].fileType = fileType
-        self.message[self.lastMessageNumber].banned = self.user[sender].autoBan
+        self.message[self.lastMessageNumber].banned = self.user[sender].autoBan #[[banned no longer exists]]
         if replyToIndex != 0:
                 self.message[self.lastMessageNumber].replyToIndex = replyToIndex
                 self.message[replyToIndex].numberOfReplies += 1
@@ -201,7 +168,7 @@ def remessage(messageIndex: uint256):
         _messageIndex: uint256 = messageIndex
         if self.message[_messageIndex].originalIndex != 0:
                 _messageIndex = self.message[_messageIndex].originalIndex
-        assert not self.message[_messageIndex].deleted and not self.message[_messageIndex].banned
+        assert not self.message[_messageIndex].deleted and not self.message[_messageIndex].banned #[[deleted no longer exists, neither does banned]]
         assert self.user[msg.sender].originalToRemessage[_messageIndex] == 0 or self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted
         self.lastMessageNumber += 1
         self.user[msg.sender].originalToRemessage[_messageIndex] = self.lastMessageNumber
@@ -228,7 +195,7 @@ def unRemessage(messageIndex: uint256):
         _messageIndex: uint256 = messageIndex
         if self.message[_messageIndex].originalIndex != 0:
                 _messageIndex = self.message[_messageIndex].originalIndex
-        self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True
+        self.message[self.user[msg.sender].originalToRemessage[_messageIndex]].deleted = True #[[deleted no longer exists]]
         self.message[_messageIndex].remessageCount = self.message[_messageIndex].remessageCount - 1
         
 ###   Deactivation functionality   ###
