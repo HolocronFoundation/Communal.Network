@@ -17,6 +17,7 @@ externalSenderAuthorization: bytes[12][address][address]
 authorizationBit: constant(uint256) = shift(1, 95)
 authorizationBit_inverted: constant(uint256) = bitwise_not(authorizationBit)
 authorizationBit_limitedMessages: constant(uint256) = shift(1, 94)
+authorizationBit_limitedMessages_inverted: constant(uint256) = bitwise_not(authorizationBit_limitedMessages)
 limitedMessageAuthorization_usedBitsMask: constant(uint256) = shift(2**16, 78)
 limitedMessageAuthorization_usedBitsMask_inverted: constant(uint256) = bitwise_not(limitedMessageAuthorization_usedBitsMask)
 
@@ -47,11 +48,24 @@ def sendMessageExternalUser(_sender: address, message: bytes[MAX_UINT256], reply
 ###   External sender functionality   ###
 
 @public
-def authorizeSender_blanket(sender: address):
-        self.externalSenderAuthorization[sender][msg.sender] = bitwise_or(self.externalSenderAuthorization[msg.sender], self.authorizationBit)
+def authorizeSender(sender: address):
+        self.externalSenderAuthorization[sender][msg.sender] = bitwise_or(self.externalSenderAuthorization[sender][msg.sender], self.authorizationBit)
 
 @public
-def deauthorizeSender_blanket(sender: address):
-        self.externalSenderAuthorization[sender][msg.sender] = bitwise_and(self.externalSenderAuthorization[msg.sender], self.authorizationBit_inverted)
+def deauthorizeSender(sender: address):
+        self.externalSenderAuthorization[sender][msg.sender] = bitwise_and(self.externalSenderAuthorization[sender][msg.sender], self.authorizationBit_inverted)
 
+@public
+def limitSenderMessages(sender: address, limit: uint256):
+        self.externalSenderAuthorization[sender][msg.sender] = bitwise_or(bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], \
+                                                                                      limitedMessageAuthorization_usedBitsMask_inverted), \
+                                                                          authorizationBit_limitedMessages + shift(limit,78))
 
+@public
+def delimitSenderMessages(sender: address):
+        self.externalSenderAuthorization[sender][msg.sender] = bitwise_and(self.externalSenderAuthorization[sender][msg.sender], self.authorizationBit_limitedMessages_inverted)
+
+@public
+def authorizeSenderAndLimitMessages(sender: address, limit: uint256):
+        self.authorizeSender(sender)
+        self.limitSenderMessages(sender, limit)
