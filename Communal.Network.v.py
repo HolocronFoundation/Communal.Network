@@ -1,31 +1,50 @@
-message: event({messageIndex: indexed(uint256), sender: indexed(address), replyToIndex: indexed(uint256), metadataCode: uint256, messageContent: bytes[128]})
+message: event({messageIndex: indexed(uint256), replyToIndex: indexed(uint256), messageInfo: indexed(uint256)})
+# messageIndex is the index of the sent message in C.N.
+# messageInfo contains, from most significant to least significant bits/bytes:
+#       - 20 bytes: the sender address
+#       - 1 bit: a flag to indicate the sender was external
 
 lastMessageNumber: public(uint256)
-externalSenderAuthorization: bool[address][address] # bool - T if authorized external sender | address - external address | address - user address
+externalSenderAuthorization: bytes[12][address][address]
+# address is the authorizing user
+# bytes[12] contains, from most significant to least significant bits/bytes:
+#       - 1 bit: blanket authorization
+#       - 1 bit: limited message count authorization
+#       - 2 bytes: limited message count authorization - remaining messages
+
+authorizationBit: constant(uint256) = shift(1, 95)
+authorizationBit_inverted: constant(uint256) = bitwise_not(authorizationBit)
+authorizationBit_limitedMessages: constant(uint256) = shift(1, 94)
+limitedMessageAuthorization_usedBits: constant(uint256) = shift(2**16, 78)
 
 @private
-def sendMessage(sender: address, replyToIndex: uint256, messageContent: bytes[32], metadataCode: uint256):
+def sendMessage(sender: address, replyToIndex: uint256, messageInfo: uint256):
         assert replyToIndex <= self.lastMessageNumber
-        log.message(self.lastMessageNumber, sender, replyToIndex, metadataCode, messageContent)
+        log.message(self.lastMessageNumber, sender, replyToIndex, messageInfo)
         self.lastMessageNumber += 1
 
 @public
 @payable
-def sendMessageUser(messageString: bytes[32], replyToIndex: uint256 = 0, metadataCode: uint256 = 0):
-        self.sendMessage(msg.sender, replyToIndex, messageString, metadataCode)
+def sendMessageUser(message: bytes[MAX_UINT256], replyToIndex: uint256 = 0, messageInfo: uint256 = 0):
+        self.sendMessage(msg.sender, replyToIndex, messageInfo)
 
 @public
 @payable
-def sendMessageExternalUser(_sender: address, messageString: bytes[32], replyToIndex: uint256 = 0, metadataCode: uint256 = 0):
-        assert self.externalSenderAuthorization[msg.sender][_sender]
-        self.sendMessage(_sender, replyToIndex, messageString, metadataCode)
+def sendMessageExternalUser(_sender: address, messageString: bytes[MAX_UINT256], replyToIndex: uint256 = 0, messageInfo: uint256 = 0):
+        assert bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], self.blanketAuthorizationBit) == self.blanketAuthorizationBit \
+               or \
+               (bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], self.authorizationBit_limitedMessages) == self.authorizationBit_limitedMessages and  \
+                shift(bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], self.limitedMessageAuthorization_usedBits), -78) > 0)     
+        self.sendMessage(_sender, replyToIndex, messageInfo)
 
-###
+###   External sender functionality   ###
 
 @public
-def authorizeSender(sender: address):
-        self.externalSenderAuthorization[sender][msg.sender] = True
+def authorizeSender_blanket(sender: address):
+        self.externalSenderAuthorization[sender][msg.sender] = bitwise_or(self.externalSenderAuthorization[msg.sender], self.blanketAuthorizationBit)
 
 @public
-def deauthorizeSender(sender: address):
-        self.externalSenderAuthorization[sender][msg.sender] = False
+def deauthorizeSender_blanket(sender: address):
+        self.externalSenderAuthorization[sender][msg.sender] = bitwise_and(self.externalSenderAuthorization[msg.sender], self.authorizationBit_inverted)
+
+
