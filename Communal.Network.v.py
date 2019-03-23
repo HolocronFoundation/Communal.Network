@@ -5,8 +5,11 @@ message: event({messageIndex: indexed(uint256), replyToIndex: indexed(uint256), 
 # messageInfo contains, from most significant to least significant bits/bytes:
 #       - 20 bytes: the sender address
 #       - 1 bit: a flag to indicate the sender was external
+# [[Double check!!!]]
+messageInfoMask: constant(uint256) = bitwise_not(shift(2**161, 94))
 
 lastMessageNumber: public(uint256)
+
 externalSenderAuthorization: bytes[12][address][address]
 # address is the authorizing user
 # bytes[12] contains, from most significant to least significant bits/bytes:
@@ -14,12 +17,15 @@ externalSenderAuthorization: bytes[12][address][address]
 #       - 1 bit: limited message count authorization
 #       - 2 bytes: limited message count authorization - remaining messages
 
+# [[DOUBLE CHECK ALL THIS SHIT]]
 authorizationBit: constant(uint256) = shift(1, 95)
 authorizationBit_inverted: constant(uint256) = bitwise_not(authorizationBit)
 authorizationBit_limitedMessages: constant(uint256) = shift(1, 94)
 authorizationBit_limitedMessages_inverted: constant(uint256) = bitwise_not(authorizationBit_limitedMessages)
 limitedMessageAuthorization_usedBitsMask: constant(uint256) = shift(2**16, 78)
 limitedMessageAuthorization_usedBitsMask_inverted: constant(uint256) = bitwise_not(limitedMessageAuthorization_usedBitsMask)
+
+lastMessageNumber: public(uint256)
 
 @private
 def sendMessage(sender: address, replyToIndex: uint256, messageInfo: uint256):
@@ -44,6 +50,11 @@ def sendMessageExternalUser(_sender: address, message: bytes[MAX_UINT256], reply
                                                                                                self.limitedMessageAuthorization_usedBitsMask) \
                                                                                    - shift(1, 78))
         self.sendMessage(_sender, replyToIndex, messageInfo)
+
+@constant
+def prepMessageInfo(sender: address, externalSender: bool, extraInfo: uint256):
+        return shift(convert(sender, uint256), 96) + shift(convert(externalSender, uint256), 95) + bitwise_and(extraInfo, messageInfoMask)
+        
 
 ###   External sender functionality   ###
 
