@@ -1,5 +1,3 @@
-# [[To do - remove sendMessage method for optimization purposes]]
-
 message: event({messageIndex: indexed(uint256), replyToIndex: indexed(uint256), messageInfo: indexed(uint256)})
 # messageIndex is the index of the sent message in C.N.
 # messageInfo contains, from most significant to least significant bits/bytes:
@@ -26,21 +24,20 @@ limitedMessageAuthorization_usedBitsMask: constant(uint256) = shift(2**16, 78)
 limitedMessageAuthorization_usedBitsMask_inverted: constant(uint256) = bitwise_not(limitedMessageAuthorization_usedBitsMask)
 
 lastMessageNumber: public(uint256)
-
-@private
-def sendMessage(sender: address, replyToIndex: uint256, messageInfo: uint256):
-        assert replyToIndex <= self.lastMessageNumber
-        log.message(self.lastMessageNumber, sender, replyToIndex, messageInfo)
-        self.lastMessageNumber += 1
+        
 
 @public
 @payable
 def sendMessageUser(message: bytes[MAX_UINT256], replyToIndex: uint256 = 0, messageInfo: uint256 = 0):
+        assert replyToIndex <= self.lastMessageNumber
         self.sendMessage(msg.sender, replyToIndex, messageInfo)
+        log.message(self.lastMessageNumber, sender, replyToIndex, prepMessageInfo(sender, False, messageInfo))
+        self.lastMessageNumber += 1 
 
 @public
 @payable
 def sendMessageExternalUser(_sender: address, message: bytes[MAX_UINT256], replyToIndex: uint256 = 0, messageInfo: uint256 = 0):
+        assert replyToIndex <= self.lastMessageNumber
         assert bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], self.authorizationBit) == self.authorizationBit
         if bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], self.authorizationBit_limitedMessages) == self.authorizationBit_limitedMessages:
                 assert shift(bitwise_and(self.externalSenderAuthorization[msg.sender][_sender], self.limitedMessageAuthorization_usedBits), -78) > 0
@@ -50,6 +47,8 @@ def sendMessageExternalUser(_sender: address, message: bytes[MAX_UINT256], reply
                                                                                                self.limitedMessageAuthorization_usedBitsMask) \
                                                                                    - shift(1, 78))
         self.sendMessage(_sender, replyToIndex, messageInfo)
+        log.message(self.lastMessageNumber, sender, replyToIndex, prepMessageInfo(sender, True, messageInfo))
+        self.lastMessageNumber += 1 
 
 @constant
 def prepMessageInfo(sender: address, externalSender: bool, extraInfo: uint256):
