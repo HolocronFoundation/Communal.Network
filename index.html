@@ -1,15 +1,59 @@
 <!doctype html>
 <html>
+	
 	<head>
+		
 		<meta charset="utf-8">
+		
 		<link rel="stylesheet" type="text/css" href="stylesheet.css">
+		
 		<script type="text/javascript" src="web3.js"></script>
+		
 		<script type="text/javascript" src="anchorme.js"></script>
-		<script type="text/javascript" src="C.N.js"></script>
+		
+		<script type="text/javascript" src="tweed.js"></script>
+		
 		<link href="https://fonts.googleapis.com/css?family=Lobster|Thasadith:700" rel="stylesheet">
+		
+		<link rel="shortcut icon" type="image/x-icon" href="Branding/logo_transparent.png"/>
+		
 		<title>Communal.Network</title>
+		
 	</head>
-
+	
+	
 	<body>
+		<section>
+			
+			<div id="holder">
+				<header class="center">
+					<h1>Communal . Network</h1>
+					<h4>// VY ver0.1 //\|/\\ Web ver0.1 \\</h4>
+					<h2>//\ By the Holocron.Foundation /\\</h2>
+					<div id="userSettings" class="navBar" onClick="footerClick('userSettings')">Settings</div><div id="genFeed" class="navBar" onClick="footerClick('genFeed')">General Feed</div><div id="userFeed" class="navBar" onClick="footerClick('userFeed')">Your Feed</div><div id="yourFeed" class="navBar" onClick="footerClick('yourFeed')">You</div><div id="about" class="navBar" onClick="footerClick('about')">About</div>
+				</header>
+				<div id="settingsDisplay" class="center">
+					<!-- On-chain Settings -->
+					<div class="center">
+						<button type="button" class="center" onclick="setDisplayName()">Set my display name</button>
+					</div>
+					<button type="button" class="center" onclick="setUsername()">Set my user name (Can only be done once!)</button> <!--[{HIDE if done]]-->
+					<!-- Local (Cookie) Settings -->
+					<!--[[<button type="button" class="center" onclick="setNumberOfMessagesPerPage()">Set Messages per page]]</button>-->
+				</div>
+				<div id="feed" class="content">
+				</div>
+				<div id="newMessage" class="content">
+					<div class="stringInput center">
+						<textarea id="newString" class="stringInputBox" onfocus="clearDefaultText(this, 'Enter your message here!');" maxlength="1024">Enter your message here!</textarea>
+					</div>
+					<div class="center">
+						<button type="button" class="center" onclick="sendMessage()" id="mainButton">Send message!</button>
+					</div>
+				</div>
+				<div id="aboutText" class="content"></div>
+			</div>
+		</section>
 	</body>
+	
 </html>
