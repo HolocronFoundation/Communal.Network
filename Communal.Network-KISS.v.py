@@ -8,7 +8,6 @@ externalSenderAuthorization: map(address, map(address, bool))
 
 owner: constant(address) = 0xd015FB4e0c7f2D0592fa642189a70ce46C90d612
 
-
 @public
 @payable
 def sendMessageUser(message: bytes[256], replyToIndex: uint256 = 0, messageInfo: uint256 = 0):
