@@ -1,21 +1,26 @@
 
 // Current program flow:
 //  check web 3 > check_network() > start_communal_network()
+//
+
+// TODO: Add send message JS
+//    Useful function - fromUtf8, toUtf8
+// TODO: Add reply to message JS
 
 // Globals
   // web3
     cn_web3 = {
-      js: null, // Loaded via // TODO:
-      injected_web3: null, // Loaded via // TODO:
+      js: null, // Loaded via setup_web3
+      injected: null, // Loaded via setup_web3
       fallback: {
-        provider: "infura",
-        endpoint: "mainnet.infura.io/v3/c642d10b5ce9473a9d5168cfbe66c708"
+        provider: null,
+        endpoint: null
       }
     };
   // Ethereum network info
     eth_network = {
-      cn_contract_address: null, // Loaded via // TODO:
-      name: null // Loaded via // TODO:
+      cn_contract_address: null, // Loaded via get_eth_network
+      name: null // Loaded via get_eth_network
     };
   // CN
     cn = {
@@ -30,35 +35,48 @@
 
 // Setting up basic web3 enviroment
   window.addEventListener('load', function() {
-    // Checking if web3 has been injected by the browser (Mist/MetaMask)
-      if (typeof web3 !== 'undefined') {
-        // Use Mist/MetaMask's provider
-          cn_web3.js = new Web3(web3.currentProvider);
-          cn_web3.injected_web3 = true;
-      } else {
-        console.log('No web3? You will be running in read-only mode!');
-        // fallback - currently falls back to infura
-          cn_web3.js = new Web3(new Web3.providers.HttpProvider(cn_web3.fallback.endpoint));
-          cn_web3.injected_web3 = false;
-      }
-    check_network();
+    cn_web3 = setup_web3();
+    eth_network = get_eth_network(); // TODO: Catch the throw
+    cn = load_cn();
+    load_feed();
+    //TODO: Populate feed with old messages
+    //TODO: Add a refresh thing when new messages come in
   });
 
+function load_feed(cn = window.cn) {
+  
+}
+
+function setup_web3(fallback = {provider: "infura", endpoint: "mainnet.infura.io/v3/c642d10b5ce9473a9d5168cfbe66c708"}) {
+  web3_js = null;
+  web3_injected = null;
+  // Checking if web3 has been injected by the browser (Mist/MetaMask)
+    if (typeof web3 !== 'undefined') {
+      // Use Mist/MetaMask's provider
+        web3_js = new Web3(web3.currentProvider);
+        web3_injected = true;
+    } else {
+      console.log('No web3? You will be running in read-only mode!');
+      // fallback - currently falls back to infura
+        web3_js = new Web3(new Web3.providers.HttpProvider(cn_web3.fallback.endpoint));
+        web3_injected = false;
+    }
+    return {
+      js: web3_js,
+      injected: web3_injected,
+      fallback: fallback
+    };
+}
+
 // Checks the network which will be used
-  function check_network() {
+  function check_network(network) {
     eth_network = get_eth_network();
     if (eth_network.cn_contract_address != null){
       console.log("You are using " + eth_network.name + " as your current Ethereum network. This network has an official Communal.Network contract on it.");
-      start_communal_network(eth_network);
     } else {
       alert("You are using " + eth_network.name + " as your current Ethereum network. This network is not officially supported, and will not launch.");
       throw "unknown network";
     }
-  }
-
-// Starts Communal.Network
-  function start_communal_network(eth_network = window.eth_network) {
-    cn = load_cn(eth_network);
   }
 
 // Utility functions
@@ -71,6 +89,7 @@
           throw "Invalid type";
       }
     }
+
   // Load Communal Network
     function load_cn(eth_network = window.eth_network){
       abi = get_cn_abi("main");
@@ -86,8 +105,9 @@
         }
       };
     }
+
   // Checks the network being used, allowing for switching between networks
-    function get_eth_network() {
+    function get_eth_network(cn_web3 = window.cn_web3) {
       cn_web3.js.version.getNetwork((err, netId) => {
         network_name = "unknown";
         cn_contract_address = null;

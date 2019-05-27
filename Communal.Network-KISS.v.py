@@ -37,3 +37,6 @@ def deauthorizeSender(sender: address):
 @public
 def withdraw():
         send(owner, self.balance)
+
+# TODO: Create send hash message vs regular
+# TODO: Cut size to 32 bytes, have send big message contract
