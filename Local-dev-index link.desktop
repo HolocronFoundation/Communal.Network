@@ -1,0 +1,7 @@
+[Desktop Entry]
+Encoding=UTF-8
+Name=Link to Communal.Network
+Type=Link
+URL=http://localhost:8000/index-dev.html
+Icon=text-html
+Name[en_US]=Local-dev-index link
