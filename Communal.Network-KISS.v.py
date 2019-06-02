@@ -137,26 +137,6 @@ def send_light_message_external_with_metadata(message: bytes32, sender: address,
 def send_light_hash_external_with_metadata(hash: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_light_item_external(reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
 
-# Editing functions (full items only!)
-@public
-@payable
-def edit_full_item_user_with_metadata(new_item: bytes32, item_index: uint256, new_metadata: uint256, is_hash: bool = False):
-    edit_with_metadata(new_item, item_index, msg.sender, self.prep_custom_metadata(new_metadata) + convert(is_hash, uint256))
-@public
-@payable
-def edit_full_item_external_with_metadata(new_item: bytes32, item_index: uint256, sender: address, new_metadata: uint256, is_hash: bool = False):
-    self.external_sender_asserts(msg.sender, sender)
-    edit_with_metadata(new_item, item_index, sender, self.prep_custom_metadata(new_metadata) + 2 + convert(is_hash, uint256))
-@public
-@payable
-def edit_full_item_user(new_item: bytes32, item_index: uint256):
-    edit(new_item, item_index, msg.sender)
-@public
-@payable
-def edit_full_item_external(new_item: bytes32, item_index: uint256, sender: address):
-    self.external_sender_asserts(msg.sender, sender)
-    edit(new_item, item_index, sender)
-
 @private
 def edit(new_item: bytes32, item_index: uint256, sender: address):
     assert shift(self.items[item_index].metadata, -96) == convert(sender, uint256)
@@ -164,8 +144,28 @@ def edit(new_item: bytes32, item_index: uint256, sender: address):
 
 @private
 def edit_with_metadata(new_item: bytes32, item_index: uint256, sender: address, new_metadata: uint256):
-    edit(new_item, item_index, sender)
+    self.edit(new_item, item_index, sender)
     self.items[item_index].metadata = self.generate_metadata(sender, new_metadata)
+
+# Editing functions (full items only!)
+@public
+@payable
+def edit_full_item_user_with_metadata(new_item: bytes32, item_index: uint256, new_metadata: uint256, is_hash: bool = False):
+    self.edit_with_metadata(new_item, item_index, msg.sender, self.prep_custom_metadata(new_metadata) + convert(is_hash, uint256))
+@public
+@payable
+def edit_full_item_external_with_metadata(new_item: bytes32, item_index: uint256, sender: address, new_metadata: uint256, is_hash: bool = False):
+    self.external_sender_asserts(msg.sender, sender)
+    self.edit_with_metadata(new_item, item_index, sender, self.prep_custom_metadata(new_metadata) + 2 + convert(is_hash, uint256))
+@public
+@payable
+def edit_full_item_user(new_item: bytes32, item_index: uint256):
+    self.edit(new_item, item_index, msg.sender)
+@public
+@payable
+def edit_full_item_external(new_item: bytes32, item_index: uint256, sender: address):
+    self.external_sender_asserts(msg.sender, sender)
+    self.edit(new_item, item_index, sender)
 
 ###   External sender functionality   ###
 
