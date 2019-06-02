@@ -38,13 +38,40 @@
     cn_web3 = setup_web3();
     eth_network = get_eth_network(); // TODO: Catch the throw
     cn = load_cn();
-    load_feed();
+    load_feed(); //TODO: explicitly pass objects
     //TODO: Populate feed with old messages
     //TODO: Add a refresh thing when new messages come in
   });
 
 function load_feed(cn = window.cn) {
-  
+  // TODO: Load feed
+}
+function load_item_data(item_event_data) { //TODO: Pass needed params
+  item_data = {
+    item_index: null, //TODO: load from event
+    reply_to_index: null, //TODO: Load from event
+    metadata: null,
+    item: null
+  };
+  if (is_light(item_event_data)) {
+    item_data = add_light_item_data(item_event_data, item_data);
+  }
+  else {
+    item_data = add_full_item_data(item_event_data, item_data);
+  }
+  return item_data
+}
+function load_light_item_data(item_event_data, item_data) { //TODO: Add params
+  // // TODO: load light item
+  // Load metadata
+  // Load tx
+  //  Load message or hash from tx
+  return item_data
+}
+function load_full_item_data(item_even_data, item_data) {
+  // TODO: Load full message
+  // Load item from contract
+  // Load metadata from contract
 }
 
 function setup_web3(fallback = {provider: "infura", endpoint: "mainnet.infura.io/v3/c642d10b5ce9473a9d5168cfbe66c708"}) {
