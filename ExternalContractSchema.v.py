@@ -1,6 +1,8 @@
 # External contract schema
 
 # [[Replace things with logs]]
+# 
+# TODO: Add send big message
 
 # # Commonalities # #
 
