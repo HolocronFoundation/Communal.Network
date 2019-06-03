@@ -30,15 +30,20 @@ cn = (function() {
     },
     send: {
       message: async function(to_send) {
-        if (self.user.account.available) {
+        if (self.user.account.available || self.user.account.load()) {  //Uses short circuit evaluation
           call = self.contract.live.methods.send_light_message_user(self.web3.js.utils.utf8ToHex(to_send));
-          call.estimateGas().then(function(gas_estimate) {
+          call.estimateGas(
+            {
+              from: self.user.account.address
+            }
+          ).then(function(gas_estimate) {
             call.send({
+              from: self.user.account.address,
               gas: gas_estimate
-            });
+            }); //TODO: What happens after the send?
           });
         } else {
-          self.user.account.load(); //TODO: add the recall function
+          throw "No account"; //TODO: Do more here
         }
       }
     },
@@ -46,7 +51,7 @@ cn = (function() {
       account: {
         available: false,
         address: null,
-        load: async function(recall_function) { //TODO: Do the recal function
+        load: async function() { //TODO: Do the recal function
           try {
             switch(self.web3.type) {
               case 0:
@@ -58,10 +63,11 @@ cn = (function() {
                 accounts = await self.web3.js.eth.getAccounts();
                 if (accounts.length != 0) {
                   self.user.account.address = accounts[0];
-                  self.user.account.available = True;
+                  self.user.account.available = true;
                 } else {
                   throw "You are not logged in!";
                 }
+                return true;
             }
           }
           catch (error) {
@@ -69,6 +75,7 @@ cn = (function() {
             // TODO: catch not logged in
             // TODO: catch no injected web3
             console.log(error);
+            return false;
           }
         }
       }
