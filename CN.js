@@ -38,32 +38,39 @@ cn = (function() {
             });
           });
         } else {
-          switch (self.web3.type) {
-            case 0:
-              //TODO: Break here, no injected web3
-            case 2:
-              try {
-                await ethereum.enable();
-              } catch (error) {
-                //TODO: check if error is of proper type
-                //TODO: Account was not enabled
-              }
-            case 1:
-              accounts = await self.web3.js.eth.getAccounts();
-              if (accounts.length != 0) {
-                self.user.account.address = accounts[0];
-                self.user.account.available = True;
-              } else {
-                //TODO: Not logged in.
-              }
-          }
+          self.user.account.load(); //TODO: add the recall function
         }
       }
     },
     user: {
       account: {
         available: false,
-        address: null
+        address: null,
+        load: async function(recall_function) { //TODO: Do the recal function
+          try {
+            switch(self.web3.type) {
+              case 0:
+                throw "You are not injecting web3!";
+              case 2:
+                await ethereum.enable();
+                /* falls through */
+              case 1:
+                accounts = await self.web3.js.eth.getAccounts();
+                if (accounts.length != 0) {
+                  self.user.account.address = accounts[0];
+                  self.user.account.available = True;
+                } else {
+                  throw "You are not logged in!";
+                }
+            }
+          }
+          catch (error) {
+            // TODO: catch account not enabled
+            // TODO: catch not logged in
+            // TODO: catch no injected web3
+            console.log(error);
+          }
+        }
       }
     }
   };
