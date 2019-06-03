@@ -9,26 +9,23 @@
 // TODO: Sort out getPastEvents
 
 // Globals
-  // web3
-    cn_web3 = {
-      js: null, // Loaded via setup_web3
-      injected: null, // Loaded via setup_web3
-      fallback: {
-        provider: null,
-        endpoint: null
-      }
-    }; // TODO: Combine into cn
-  // Ethereum network info
-    eth_network = {
-      cn_contract_address: null, // Loaded via get_eth_network
-      name: null // Loaded via get_eth_network
-    };
   // CN
     cn = {
+      web3: {
+        js: null, // Loaded via setup_web3
+        injected: null, // Loaded via setup_web3
+        fallback: {
+          provider: null,
+          endpoint: null
+        }
+      },
       abi: null,
-      contract: null,
-      messages: {
-        live: null,
+      contract: {
+        address: null,
+        live: null
+      },
+      items: {
+        new: null,
         old: null
       }
     };
@@ -36,9 +33,19 @@
 
 // Setting up basic web3 enviroment
   window.addEventListener('load', async function() {
-    cn_web3 = setup_web3();
-    eth_network = await get_eth_network(cn_web3); // TODO: Catch the throw
-    cn = load_cn(eth_network);
+    cn.web3 = setup_web3();
+    cn.contract.address = await get_contract_address(cn);
+    if(cn.contract.address != null) { // TODO: Make these more detailed
+      console.log("This network has an official Communal.Network contract on it.");
+    }
+    else {
+      alert("This network is not officially supported.");
+      throw "no cn";
+    }
+    cn.abi = get_cn_abi("main");
+    cn.contract.live = new cn.web3.js.eth.Contract(cn.abi, cn.contract.address); // TODO: Consider options
+    cn.items.new = cn.contract.live.events.item(); // TODO: Consider options
+    cn.items.old = cn.contract.getPastEvents("item"); // TODO: Consider options
     load_feed(cn);
     //TODO: Add a refresh thing when new messages come in
   });
@@ -84,7 +91,7 @@ function setup_web3(fallback = {provider: "infura", endpoint: "mainnet.infura.io
     } else {
       console.log('No web3? You will be running in read-only mode!');
       // fallback - currently falls back to infura
-        web3_js = new Web3(new Web3.providers.HttpProvider(cn_web3.fallback.endpoint));
+        web3_js = new Web3(new Web3.providers.HttpProvider(cn.web3.fallback.endpoint));
         web3_injected = false;
     }
     return {
@@ -93,17 +100,6 @@ function setup_web3(fallback = {provider: "infura", endpoint: "mainnet.infura.io
       fallback: fallback
     };
 }
-
-// Checks the network which will be used
-  function check_network(network) {
-    eth_network = get_eth_network();
-    if (eth_network.cn_contract_address != null){
-      console.log("You are using " + eth_network.name + " as your current Ethereum network. This network has an official Communal.Network contract on it.");
-    } else {
-      alert("You are using " + eth_network.name + " as your current Ethereum network. This network is not officially supported, and will not launch.");
-      throw "unknown network";
-    }
-  }
 
 // Utility functions
   // Get the ABI for the main communal network
@@ -117,25 +113,9 @@ function setup_web3(fallback = {provider: "infura", endpoint: "mainnet.infura.io
       }
     }
 
-  // Load Communal Network
-    function load_cn(eth_network = window.eth_network){
-      abi = get_cn_abi("main");
-      contract = new cn_web3.js.eth.Contract(abi, eth_network.cn_contract_address); // TODO: Consider options
-      live_subscription = contract.events.item(); // TODO: Consider options
-      old_messages = contract.getPastEvents("item"); // TODO: Consider options
-      return {
-        abi: abi,
-        contract: contract,
-        messages: {
-          live: live_subscription,
-          old: old_messages
-        }
-      };
-    }
-
   // Checks the network being used, allowing for switching between networks
-    function get_eth_network(cn_web3 = window.cn_web3) {
-      return cn_web3.js.eth.net.getId().then(function(netId){
+    function get_contract_address(cn = window.cn) {
+      return cn.web3.js.eth.net.getId().then(function(netId){
         network_name = "unknown";
         cn_contract_address = null;
         switch (netId) {
@@ -156,9 +136,6 @@ function setup_web3(fallback = {provider: "infura", endpoint: "mainnet.infura.io
             network_name = "kovan";
             break;
         }
-        return {
-          cn_contract_address: cn_contract_address,
-          name: network_name
-        };
+        return cn_contract_address;
       });
     }
