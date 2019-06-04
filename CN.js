@@ -12,21 +12,21 @@
 cn = (function() {
   self = {
     web3: {
-      js: null, // Loaded via setup_web3
-      type: null,
+      js: undefined, // Loaded via setup_web3
+      type: undefined,
       fallback: {
-        provider: null,
-        endpoint: null
+        provider: undefined,
+        endpoint: undefined
       }
     },
-    abi: null,
+    abi: undefined,
     contract: {
-      address: null,
-      live: null
+      address: undefined,
+      live: undefined
     },
     items: {
-      new: null,
-      old: null
+      new: undefined,
+      old: undefined
     },
     send: {
       message: async function(to_send) {
@@ -52,7 +52,7 @@ cn = (function() {
     user: {
       account: {
         available: false,
-        address: null,
+        address: undefined,
         load: async function() {
           try {
             switch (self.web3.type) {
@@ -89,7 +89,7 @@ cn = (function() {
 window.addEventListener('load', async function() {
   cn.web3 = setup_web3();
   cn.contract.address = await get_contract_address(cn);
-  if (cn.contract.address != null) { // TODO: Make these more detailed
+  if (cn.contract.address) { // TODO: Make these more detailed
     console.log("This network has an official Communal.Network contract on it.");
   } else {
     alert("This network is not officially supported.");
@@ -110,26 +110,60 @@ function load_old_items(cn = window.cn) {
 }
 
 function load_new_items(cn = window.cn) {
-  cn.items.new.on("data", function(new_item_data) {
+  cn.items.new.on("data", async function(new_item_data) {
+    item = {
+      index: new_item_data.returnValues.item_index,// TODO: Use to position
+      hash: new_item_data.transactionHash,
+      raw: undefined,
+      sender: undefined,
+      call: undefined,
+      is: {
+        light: undefined,
+        hash: undefined,
+        external: undefined
+      },
+      metadata: undefined
+    };
     console.log(new_item_data);
-    item_index = new_item_data.returnValues.item_index;
-    reply_to_index = new_item_data.returnValues.reply_to_index; //TODO: Could cut reply to index from log?
-    item_hash = new_item_data.transactionHash;
-    item_transaction = cn.web3.js.eth.getTransaction(item_hash);
-    console.log(item_index); //TODO: Use to place in a feed
-    console.log(reply_to_index); // TODO: Pass this off
-    console.log(item_hash); // TODO: Get the message via loading the tx from the hash get the metadata from the hash if light
-    console.log(item_transaction);
-    // TODO: If ABI decoder can get the function name, doesn't that get all the default metadata? Consider removing metadata
+    console.log(item.index); //TODO: Use to place in a feed
+    console.log(item.hash); // TODO: Get the message via loading the tx from the hash; get the metadata from the hash if light; get the reply to index
+    item.raw = await cn.web3.js.eth.getTransaction(item.hash);
+    console.log(item);
+    item.sender = item.raw.from;
+    item.call = abiDecoder.decodeMethod(item.raw.input);
+    item.call.params = item.call.params.reduce(function(map, parameters) {
+      map[parameters.name] = parameters.value;
+      return map;
+    }, {});
+    item.is.light = item.call.name.includes("light");
+    if (item.is.light) {
+      item.is.hash = item.call.name.includes("hash");
+      item.is.external = item.call.name.includes("external");
+      if (item.call.name.includes("metadata")) {
+        item.metadata = decode_metadata(item.call.params.custom_metadata); // TODO: load metadata
+      }
+      else {
+        item.metadata = null;
+      }
+    }
+    else {
+      // TODO: Do full stuff here
+    }
   });
+}
+
+decode = {
+  metadata: function(to_decode) {
+    return to_decode; //TODO: Decode here
+  }
 }
 
 function load_item_data(item_event_data) { //TODO: Pass needed params
   item_data = {
-    item_index: null, //TODO: load from event
-    reply_to_index: null, //TODO: Load from event
-    metadata: null,
-    item: null
+    item_index: undefined, //TODO: load from event
+    reply_to_index: undefined, //TODO: Load from event
+    metadata: undefined,
+    item: undefined
   };
   if (is_light(item_event_data)) {
     item_data = add_light_item_data(item_event_data, item_data);
@@ -156,8 +190,8 @@ function setup_web3(fallback = {
   provider: "infura",
   endpoint: "mainnet.infura.io/v3/c642d10b5ce9473a9d5168cfbe66c708"
 }) {
-  web3_js = null;
-  web3_type = null;
+  web3_js = undefined;
+  web3_type = undefined;
   if (window.ethereum) {
     web3_js = new Web3(ethereum);
     web3_type = 2;
@@ -178,7 +212,7 @@ function setup_web3(fallback = {
 
 // Utility functions
 // Get the ABI for the main communal network
-function get_cn_abi(type, name = null) {
+function get_cn_abi(type, name = undefined) {
   //TODO: Load ABI from file
   switch (type) {
     case "main":
@@ -872,7 +906,7 @@ function get_cn_abi(type, name = null) {
 function get_contract_address(cn = window.cn) {
   return cn.web3.js.eth.net.getId().then(function(netId) {
     network_name = "unknown";
-    cn_contract_address = null;
+    cn_contract_address = undefined;
     switch (netId) {
       case 1:
         network_name = "mainnet";

@@ -63,19 +63,19 @@ def send_light_item_external(reply_to_index: uint256, sender: address, msg_sende
     self.send_light_item(reply_to_index, sender)
 @public
 @payable
-def send_light_message_user(message: bytes32, reply_to_index: uint256 = 0):
+def send_light_message_user(item: bytes32, reply_to_index: uint256 = 0):
     self.send_light_item(reply_to_index, msg.sender)
 @public
 @payable
-def send_light_hash_user(hash: bytes32, reply_to_index: uint256 = 0):
+def send_light_hash_user(item: bytes32, reply_to_index: uint256 = 0):
     self.send_light_item(reply_to_index, msg.sender)
 @public
 @payable
-def send_light_message_user_with_metadata(message: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
+def send_light_message_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_light_item(reply_to_index, msg.sender)
 @public
 @payable
-def send_light_hash_user_with_metadata(hash: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
+def send_light_hash_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_light_item(reply_to_index, msg.sender)
 
 # Functions which feed into send_full_item
@@ -85,55 +85,55 @@ def send_full_item_external(item: bytes32, reply_to_index: uint256, sender: addr
     self.send_full_item(item, reply_to_index, sender, metadata + 2)
 @public
 @payable
-def send_full_message_user(message: bytes32, reply_to_index: uint256 = 0):
-    self.send_full_item(message, reply_to_index, msg.sender, 0)
+def send_full_message_user(item: bytes32, reply_to_index: uint256 = 0):
+    self.send_full_item(item, reply_to_index, msg.sender, 0)
 @public
 @payable
-def send_full_hash_user(hash: bytes32, reply_to_index: uint256 = 0):
-    self.send_full_item(hash, reply_to_index, msg.sender, 1)
+def send_full_hash_user(item: bytes32, reply_to_index: uint256 = 0):
+    self.send_full_item(item, reply_to_index, msg.sender, 1)
 @public
 @payable
-def send_full_message_user_with_metadata(message: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_full_item(message, reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata))
+def send_full_message_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
+    self.send_full_item(item, reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata))
 @public
 @payable
-def send_full_hash_user_with_metadata(hash: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_full_item(hash, reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
+def send_full_hash_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
+    self.send_full_item(item, reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
 
 # Functions which feed into send_full_item_external
 @public
 @payable
-def send_full_message_external(message: bytes32, sender: address, reply_to_index: uint256 = 0):
-    self.send_full_item_external(message, reply_to_index, sender, msg.sender, 0)
+def send_full_message_external(item: bytes32, sender: address, reply_to_index: uint256 = 0):
+    self.send_full_item_external(item, reply_to_index, sender, msg.sender, 0)
 @public
 @payable
-def send_full_hash_external(hash: bytes32, sender: address, reply_to_index: uint256 = 0):
-    self.send_full_item_external(hash, reply_to_index, sender, msg.sender, 1)
+def send_full_hash_external(item: bytes32, sender: address, reply_to_index: uint256 = 0):
+    self.send_full_item_external(item, reply_to_index, sender, msg.sender, 1)
 @public
 @payable
-def send_full_message_external_with_metadata(message: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_full_item_external(message, reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata))
+def send_full_message_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
+    self.send_full_item_external(item, reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata))
 @public
 @payable
-def send_full_hash_external_with_metadata(hash: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_full_item_external(hash, reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
+def send_full_hash_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
+    self.send_full_item_external(item, reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
 
 # Functions which feed into send_light_item_external
 @public
 @payable
-def send_light_message_external(message: bytes32, sender: address, reply_to_index: uint256 = 0):
+def send_light_message_external(item: bytes32, sender: address, reply_to_index: uint256 = 0):
     self.send_light_item_external(reply_to_index, sender, msg.sender)
 @public
 @payable
-def send_light_hash_external(hash: bytes32, sender: address, reply_to_index: uint256 = 0):
+def send_light_hash_external(item: bytes32, sender: address, reply_to_index: uint256 = 0):
     self.send_light_item_external(reply_to_index, sender, msg.sender)
 @public
 @payable
-def send_light_message_external_with_metadata(message: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
+def send_light_message_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_light_item_external(reply_to_index, sender, msg.sender)
 @public
 @payable
-def send_light_hash_external_with_metadata(hash: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
+def send_light_hash_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_light_item_external(reply_to_index, sender, msg.sender)
 
 # Editing functions (full items only!)
