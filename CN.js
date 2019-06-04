@@ -35,11 +35,9 @@ cn = (function() {
         }
         if (self.user.account.available) {
           call = self.contract.live.methods.send_light_message_user(self.web3.js.utils.utf8ToHex(to_send));
-          call.estimateGas(
-            {
-              from: self.user.account.address
-            }
-          ).then(function(gas_estimate) {
+          call.estimateGas({
+            from: self.user.account.address
+          }).then(function(gas_estimate) {
             call.send({
               from: self.user.account.address,
               gas: gas_estimate
@@ -57,7 +55,7 @@ cn = (function() {
         address: null,
         load: async function() {
           try {
-            switch(self.web3.type) {
+            switch (self.web3.type) {
               case 0:
                 throw "You are not injecting web3!";
               case 2:
@@ -73,8 +71,7 @@ cn = (function() {
                 }
                 return true;
             }
-          }
-          catch (error) {
+          } catch (error) {
             // TODO: catch account not enabled
             // TODO: catch not logged in
             // TODO: catch no injected web3
@@ -116,16 +113,13 @@ function load_new_items(cn = window.cn) {
   cn.items.new.on("data", function(new_item_data) {
     console.log(new_item_data);
     item_index = new_item_data.returnValues.item_index;
-    metadata = new_item_data.returnValues.metadata;
-    reply_to_index = new_item_data.returnValues.reply_to_index;
+    reply_to_index = new_item_data.returnValues.reply_to_index; //TODO: Could cut reply to index from log?
     item_hash = new_item_data.transactionHash;
     item_transaction = cn.web3.js.eth.getTransaction(item_hash);
     console.log(item_index); //TODO: Use to place in a feed
-    console.log(metadata); //TODO: Process metadat
     console.log(reply_to_index); // TODO: Pass this off
-    console.log(item_hash); // TODO: Get the message via loading the tx from the hash
+    console.log(item_hash); // TODO: Get the message via loading the tx from the hash get the metadata from the hash if light
     console.log(item_transaction);
-    // TODO: If the hash contains the sender, could I cut it from the metadata?
     // TODO: If ABI decoder can get the function name, doesn't that get all the default metadata? Consider removing metadata
   });
 }
@@ -193,14 +187,6 @@ function get_cn_abi(type, name = null) {
         "inputs": [{
           "type": "uint256",
           "name": "item_index",
-          "indexed": true
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index",
-          "indexed": true
-        }, {
-          "type": "uint256",
-          "name": "metadata",
           "indexed": true
         }],
         "anonymous": false,
@@ -899,12 +885,13 @@ function get_contract_address(cn = window.cn) {
         break;
       case 4:
         network_name = "rinkeby";
-        cn_contract_address = "0xFc8703e6BfAc77cDF25736005DcCE4a6c49d415D";
+        cn_contract_address = "0x2242D97EE9d224Cc8F5899F5cc2593798ACd72b8";
         break;
       case 42:
         network_name = "kovan";
         break;
     }
     return cn_contract_address;
+    //// TODO: Return or remove network_name
   });
 }
