@@ -30,7 +30,10 @@ cn = (function() {
     },
     send: {
       message: async function(to_send) {
-        if (self.user.account.available || self.user.account.load()) {  //Uses short circuit evaluation
+        if (!self.user.account.available) {
+          await self.user.account.load();
+        }
+        if (self.user.account.available) {
           call = self.contract.live.methods.send_light_message_user(self.web3.js.utils.utf8ToHex(to_send));
           call.estimateGas(
             {
@@ -45,13 +48,14 @@ cn = (function() {
         } else {
           throw "No account"; //TODO: Do more here
         }
+
       }
     },
     user: {
       account: {
         available: false,
         address: null,
-        load: async function() { //TODO: Do the recal function
+        load: async function() {
           try {
             switch(self.web3.type) {
               case 0:
@@ -98,12 +102,32 @@ window.addEventListener('load', async function() {
   cn.contract.live = new cn.web3.js.eth.Contract(cn.abi, cn.contract.address); // TODO: Consider options
   cn.items.new = cn.contract.live.events.item(); // TODO: Consider options
   cn.items.old = cn.contract.live.getPastEvents("item"); // TODO: Consider options
-  load_feed(cn);
+  abiDecoder.addABI(cn.abi);
+  load_old_items(cn);
   //TODO: Add a refresh thing when new messages come in
+  load_new_items(cn);
 });
 
-function load_feed(cn = window.cn) {
-  // TODO: Load feed
+function load_old_items(cn = window.cn) {
+  // TODO: Fill this
+}
+
+function load_new_items(cn = window.cn) {
+  cn.items.new.on("data", function(new_item_data) {
+    console.log(new_item_data);
+    item_index = new_item_data.returnValues.item_index;
+    metadata = new_item_data.returnValues.metadata;
+    reply_to_index = new_item_data.returnValues.reply_to_index;
+    item_hash = new_item_data.transactionHash;
+    item_transaction = cn.web3.js.eth.getTransaction(item_hash);
+    console.log(item_index); //TODO: Use to place in a feed
+    console.log(metadata); //TODO: Process metadat
+    console.log(reply_to_index); // TODO: Pass this off
+    console.log(item_hash); // TODO: Get the message via loading the tx from the hash
+    console.log(item_transaction);
+    // TODO: If the hash contains the sender, could I cut it from the metadata?
+    // TODO: If ABI decoder can get the function name, doesn't that get all the default metadata? Consider removing metadata
+  });
 }
 
 function load_item_data(item_event_data) { //TODO: Pass needed params
