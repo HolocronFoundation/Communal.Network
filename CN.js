@@ -25,7 +25,10 @@ cn = (function() {
       live: undefined
     },
     items: {
-      new: undefined,
+      new: {
+        subscription: undefined,
+        queue: {}
+      },
       old: undefined
     },
     send: {
@@ -80,6 +83,19 @@ cn = (function() {
           }
         }
       }
+    },
+    decode: {
+      metadata: function(to_decode) {
+        return to_decode; //TODO: Decode here
+      },
+      data: function(to_decode, is_hash) { // TODO: Add encoding param (default is utf-8)
+        if (is_hash) {
+          return to_decode; //TODO: Decode here
+        }
+        else {
+          return self.web3.js.utils.toUtf8(to_decode);
+        }
+      }
     }
   };
   return self;
@@ -97,7 +113,7 @@ window.addEventListener('load', async function() {
   }
   cn.abi = get_cn_abi("main");
   cn.contract.live = new cn.web3.js.eth.Contract(cn.abi, cn.contract.address); // TODO: Consider options
-  cn.items.new = cn.contract.live.events.item(); // TODO: Consider options
+  cn.items.new.subscription = cn.contract.live.events.item(); // TODO: Consider options
   cn.items.old = cn.contract.live.getPastEvents("item"); // TODO: Consider options
   abiDecoder.addABI(cn.abi);
   load_old_items(cn);
@@ -122,7 +138,8 @@ function load_new_items(cn = window.cn) {
         hash: undefined,
         external: undefined
       },
-      metadata: undefined
+      metadata: undefined,
+      data: undefined
     };
     console.log(new_item_data);
     console.log(item.index); //TODO: Use to place in a feed
@@ -140,11 +157,12 @@ function load_new_items(cn = window.cn) {
       item.is.hash = item.call.name.includes("hash");
       item.is.external = item.call.name.includes("external");
       if (item.call.name.includes("metadata")) {
-        item.metadata = decode_metadata(item.call.params.custom_metadata); // TODO: load metadata
+        item.metadata = cn.decode.metadata(item.call.params.custom_metadata); // TODO: load metadata
       }
       else {
         item.metadata = null;
       }
+      item.data = cn.decode.data(item.call.params.item, item.is.hash);
     }
     else {
       // TODO: Do full stuff here
@@ -152,12 +170,7 @@ function load_new_items(cn = window.cn) {
   });
 }
 
-decode = {
-  metadata: function(to_decode) {
-    return to_decode; //TODO: Decode here
-  }
-}
-
+// TODO: Use or kill function
 function load_item_data(item_event_data) { //TODO: Pass needed params
   item_data = {
     item_index: undefined, //TODO: load from event
@@ -172,16 +185,16 @@ function load_item_data(item_event_data) { //TODO: Pass needed params
   }
   return item_data;
 }
-
-function load_light_item_data(item_event_data, item_data) { //TODO: Add params
+// TODO: Use or kill function
+function add_light_item_data(item_event_data, item_data) { //TODO: Add params
   // // TODO: load light item
   // Load metadata
   // Load tx
   //  Load message or hash from tx
   return item_data;
 }
-
-function load_full_item_data(item_even_data, item_data) {
+// TODO: Use or kill function
+function load_full_item_data(item_event_data, item_data) {
   // Load item from contract
   // Load metadata from contract
 }
@@ -216,687 +229,7 @@ function get_cn_abi(type, name = undefined) {
   //TODO: Load ABI from file
   switch (type) {
     case "main":
-      return [{
-        "name": "item",
-        "inputs": [{
-          "type": "uint256",
-          "name": "item_index",
-          "indexed": true
-        }],
-        "anonymous": false,
-        "type": "event"
-      }, {
-        "name": "send_light_message_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_message_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_full_hash_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_message_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "message"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "send_light_hash_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "hash"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "custom_metadata"
-        }, {
-          "type": "uint256",
-          "name": "reply_to_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "edit_full_item_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "new_item"
-        }, {
-          "type": "uint256",
-          "name": "item_index"
-        }, {
-          "type": "uint256",
-          "name": "new_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "edit_full_item_user_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "new_item"
-        }, {
-          "type": "uint256",
-          "name": "item_index"
-        }, {
-          "type": "uint256",
-          "name": "new_metadata"
-        }, {
-          "type": "bool",
-          "name": "is_hash"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "edit_full_item_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "new_item"
-        }, {
-          "type": "uint256",
-          "name": "item_index"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "new_metadata"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "edit_full_item_external_with_metadata",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "new_item"
-        }, {
-          "type": "uint256",
-          "name": "item_index"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }, {
-          "type": "uint256",
-          "name": "new_metadata"
-        }, {
-          "type": "bool",
-          "name": "is_hash"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function"
-      }, {
-        "name": "edit_full_item_user",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "new_item"
-        }, {
-          "type": "uint256",
-          "name": "item_index"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function",
-        "gas": 37964
-      }, {
-        "name": "edit_full_item_external",
-        "outputs": [],
-        "inputs": [{
-          "type": "bytes32",
-          "name": "new_item"
-        }, {
-          "type": "uint256",
-          "name": "item_index"
-        }, {
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": true,
-        "type": "function",
-        "gas": 39055
-      }, {
-        "name": "authorizeSender",
-        "outputs": [],
-        "inputs": [{
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": false,
-        "type": "function",
-        "gas": 36457
-      }, {
-        "name": "deauthorizeSender",
-        "outputs": [],
-        "inputs": [{
-          "type": "address",
-          "name": "sender"
-        }],
-        "constant": false,
-        "payable": false,
-        "type": "function",
-        "gas": 21487
-      }, {
-        "name": "withdraw",
-        "outputs": [],
-        "inputs": [],
-        "constant": false,
-        "payable": false,
-        "type": "function",
-        "gas": 36433
-      }, {
-        "name": "last_item_index",
-        "outputs": [{
-          "type": "uint256",
-          "name": "out"
-        }],
-        "inputs": [],
-        "constant": true,
-        "payable": false,
-        "type": "function",
-        "gas": 1473
-      }, {
-        "name": "items__reply_to_index",
-        "outputs": [{
-          "type": "uint256",
-          "name": "out"
-        }],
-        "inputs": [{
-          "type": "uint256",
-          "name": "arg0"
-        }],
-        "constant": true,
-        "payable": false,
-        "type": "function",
-        "gas": 1708
-      }, {
-        "name": "items__item",
-        "outputs": [{
-          "type": "bytes32",
-          "name": "out"
-        }],
-        "inputs": [{
-          "type": "uint256",
-          "name": "arg0"
-        }],
-        "constant": true,
-        "payable": false,
-        "type": "function",
-        "gas": 1744
-      }, {
-        "name": "items__metadata",
-        "outputs": [{
-          "type": "uint256",
-          "name": "out"
-        }],
-        "inputs": [{
-          "type": "uint256",
-          "name": "arg0"
-        }],
-        "constant": true,
-        "payable": false,
-        "type": "function",
-        "gas": 1774
-      }, {
-        "name": "external_sender_authorization",
-        "outputs": [{
-          "type": "bool",
-          "name": "out"
-        }],
-        "inputs": [{
-          "type": "address",
-          "name": "arg0"
-        }, {
-          "type": "address",
-          "name": "arg1"
-        }],
-        "constant": true,
-        "payable": false,
-        "type": "function",
-        "gas": 1925
-      }];
+      return [{"name": "item", "inputs": [{"type": "uint256", "name": "item_index", "indexed": true}], "anonymous": false, "type": "event"}, {"name": "send_light_message_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_message_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_full_hash_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_message_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "send_light_hash_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "item"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "custom_metadata"}, {"type": "uint256", "name": "reply_to_index"}], "constant": false, "payable": true, "type": "function"}, {"name": "edit_full_item_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "new_item"}, {"type": "uint256", "name": "item_index"}, {"type": "uint256", "name": "new_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "edit_full_item_user_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "new_item"}, {"type": "uint256", "name": "item_index"}, {"type": "uint256", "name": "new_metadata"}, {"type": "bool", "name": "is_hash"}], "constant": false, "payable": true, "type": "function"}, {"name": "edit_full_item_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "new_item"}, {"type": "uint256", "name": "item_index"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "new_metadata"}], "constant": false, "payable": true, "type": "function"}, {"name": "edit_full_item_external_with_metadata", "outputs": [], "inputs": [{"type": "bytes32", "name": "new_item"}, {"type": "uint256", "name": "item_index"}, {"type": "address", "name": "sender"}, {"type": "uint256", "name": "new_metadata"}, {"type": "bool", "name": "is_hash"}], "constant": false, "payable": true, "type": "function"}, {"name": "edit_full_item_user", "outputs": [], "inputs": [{"type": "bytes32", "name": "new_item"}, {"type": "uint256", "name": "item_index"}], "constant": false, "payable": true, "type": "function", "gas": 37964}, {"name": "edit_full_item_external", "outputs": [], "inputs": [{"type": "bytes32", "name": "new_item"}, {"type": "uint256", "name": "item_index"}, {"type": "address", "name": "sender"}], "constant": false, "payable": true, "type": "function", "gas": 39055}, {"name": "authorizeSender", "outputs": [], "inputs": [{"type": "address", "name": "sender"}], "constant": false, "payable": false, "type": "function", "gas": 36457}, {"name": "deauthorizeSender", "outputs": [], "inputs": [{"type": "address", "name": "sender"}], "constant": false, "payable": false, "type": "function", "gas": 21487}, {"name": "withdraw", "outputs": [], "inputs": [], "constant": false, "payable": false, "type": "function", "gas": 36433}, {"name": "last_item_index", "outputs": [{"type": "uint256", "name": "out"}], "inputs": [], "constant": true, "payable": false, "type": "function", "gas": 1473}, {"name": "items__reply_to_index", "outputs": [{"type": "uint256", "name": "out"}], "inputs": [{"type": "uint256", "name": "arg0"}], "constant": true, "payable": false, "type": "function", "gas": 1708}, {"name": "items__item", "outputs": [{"type": "bytes32", "name": "out"}], "inputs": [{"type": "uint256", "name": "arg0"}], "constant": true, "payable": false, "type": "function", "gas": 1744}, {"name": "items__metadata", "outputs": [{"type": "uint256", "name": "out"}], "inputs": [{"type": "uint256", "name": "arg0"}], "constant": true, "payable": false, "type": "function", "gas": 1774}, {"name": "external_sender_authorization", "outputs": [{"type": "bool", "name": "out"}], "inputs": [{"type": "address", "name": "arg0"}, {"type": "address", "name": "arg1"}], "constant": true, "payable": false, "type": "function", "gas": 1925}];
     default:
       throw "Invalid type";
   }
@@ -919,7 +252,7 @@ function get_contract_address(cn = window.cn) {
         break;
       case 4:
         network_name = "rinkeby";
-        cn_contract_address = "0x2242D97EE9d224Cc8F5899F5cc2593798ACd72b8";
+        cn_contract_address = "0x9241Fde730d4d7E84129abF135Af8DD70121fcD0";
         break;
       case 42:
         network_name = "kovan";
