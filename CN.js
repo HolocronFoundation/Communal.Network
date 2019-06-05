@@ -126,7 +126,7 @@ function load_old_items(cn = window.cn) {
 }
 
 function load_new_items(cn = window.cn) {
-  cn.items.new.on("data", async function(new_item_data) {
+  cn.items.new.subscription.on("data", async function(new_item_data) {
     item = {
       index: new_item_data.returnValues.item_index,// TODO: Use to position
       hash: new_item_data.transactionHash,
@@ -136,7 +136,8 @@ function load_new_items(cn = window.cn) {
       is: {
         light: undefined,
         hash: undefined,
-        external: undefined
+        external: undefined,
+        reply: undefined
       },
       metadata: undefined,
       data: undefined
@@ -153,6 +154,7 @@ function load_new_items(cn = window.cn) {
       return map;
     }, {});
     item.is.light = item.call.name.includes("light");
+    // TODO: Get and check if item is reply
     if (item.is.light) {
       item.is.hash = item.call.name.includes("hash");
       item.is.external = item.call.name.includes("external");
@@ -167,6 +169,7 @@ function load_new_items(cn = window.cn) {
     else {
       // TODO: Do full stuff here
     }
+    cn.items.new.queue[item.index] = item;
   });
 }
 
@@ -185,6 +188,7 @@ function load_item_data(item_event_data) { //TODO: Pass needed params
   }
   return item_data;
 }
+
 // TODO: Use or kill function
 function add_light_item_data(item_event_data, item_data) { //TODO: Add params
   // // TODO: load light item
