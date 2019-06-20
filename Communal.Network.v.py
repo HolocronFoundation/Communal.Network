@@ -16,14 +16,15 @@ external_sender_authorization: public(map(address, map(address, bool)))
 
 owner: constant(address) = 0xd015FB4e0c7f2D0592fa642189a70ce46C90d612
 custom_metadata_mask: constant(uint256) = 2 ** (12*8+1) - 1 - 7 # Fills 12 bytes with F, then sets the last three bits to 0
+# TODO: Add owner/management functions
 
 # Helper methods - used across several disparate paths
 
-@private
+@public
 @constant
 def external_sender_asserts(msg_sender: address, sender: address):
     assert self.external_sender_authorization[msg_sender][sender]
-@private
+@public
 @constant
 def prep_custom_metadata(custom_metadata: uint256) -> uint256:
     return bitwise_and(custom_metadata, custom_metadata_mask)
@@ -32,7 +33,7 @@ def prep_custom_metadata(custom_metadata: uint256) -> uint256:
 def check_item_then_iterate_last_item(reply_to_index: uint256):
     assert reply_to_index <= self.last_item_index
     self.last_item_index += 1
-@private
+@public
 @constant
 def generate_metadata(sender: address, other_metadata: uint256) -> uint256:
     # Default_metadata is 3 bits.
