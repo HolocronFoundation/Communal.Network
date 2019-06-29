@@ -1,33 +1,25 @@
 # Communal.Network
 
-Communal.Network is an open source and public domain social media and, more generally, file distribution site running on the Ethereum network.
+Communal.Network is a Modular Medium Distributed Distribution Secure System (MMDDSS), originally developed by The Holocron.Foundation.
 
-There are three aspects of the above which provide key benefits: being open source, being in the public domain, and running on Ethereum. *See benefits*.
+**Modular:** The Holocron.Foundation designed Communal.Network to be modular via two pathways: a "channel" system and an "extension" system:
+* **Channels:** Anyone can claim a channel, and then define how the channel functions - what content the channel distributes, how the UI displays content, who or what can add content to a channel, what governance mechanisms a channel employs...
+* **Extensions:** TODO
 
-The network is designed to be highly flexible, modular, and open. You could combine our network with custom HTML, CSS, and Javascript to run your own social networking site with your own features. You could create additional Ethereum code to build additional on-chain features as well and call a combination of our code and yours through custom web code (though we hope we've made the design sufficiently flexible that this will not be needed in most use cases).
+**Medium:** TODO
 
-## Benefits
+**Distributed:** The Holocron.Foundation placed Communal.Network on the Ethereum blockchain; the Ethereum blockchain distributes the Communal.Network via thousands of computers, located globally, each containing a backup of Communal.Network, in a P2P manner. This global P2P distribution provides censorship-resistance to the network.
 
-### Open source benefits
+**Distribution:** TODO
 
-Being open source allows you to see and audit every aspect of how our network runs. You can see exactly what data is retained. We aren't collecting extraneous information needed beyond the bare minimum to run the features included.
+**Secure:** The Ethereum blockchain provides three key pieces of security to Communal.Network:
+* **Personal info/password security:** You are *never* required to send a password, email address, name, or other piece of information to the network.
+* **Spam-resistance:** Due to the costs of transacting using Ethereum, this discourages spam by putting the cost to interact with the network on the spammer, rather than on the server-runner.
+* **Auditable:** You can audit the open source code.
 
-We also accept contributions to improve out network - which requires the availability of our source code.
+**System:** Communal.Network consists of a primary back-end, front-end, and file distribution working in tandem and requiring no maintenance:
+* **Back-end:** Communal.Network's primary back-end is the Ethereum blockchain. The Ethereum blockchain contains the basic configuration information, files, hashes, and logic which run and distribute Communal.Network. The Holocron.Foundation has coded the back-end in Vyper.
+* **Front-end:** The Holocron.Foundation build the primary front-end using HTML, CSS, and JavaScript, a traditional front-end web stack. This front-end displays user content and allows users to distribute content.
+* **File-distribution:** Users can store files using IPFS and distribute the hashes of those files via the Ethereum back-end. Users can post content via IPFS directly in their browser, or post files to IPFS and later distribute the hashes via Communal.Network.
 
-### Ethereum benefits
-
-Communal.Network is secure. There are no human points of failure, our code can be audited, and we never even touch a password or email of yours.
-
-Communal.Network is censor-resistant. This is due to the immutable nature of the blockchain, and the P2P ability to transact on the network.
-
-Communal.Network is spam-resistant. Due to the costs of transacting using Ethereum, this discourages spam by putting the cost to interact with the network on the spammer, rather than on the server-runner.
-
-Communal.Network is global. *See* https://www.ethernodes.org/network/1
-
-Communal.Network is decentralized.
-
-Communal.Network will run as long as Ethereum does.
-
-### Public domain benefits
-
-If you do not like how the network is being run, you can create your own version using our code.
+Communal.Network is open source, and The Holocron.Foundation has licensed the code under the CC0 license - effectively, the code is in the public domain. The Holocron.Foundation appreciates contributions to the Communal.Network code-base!
