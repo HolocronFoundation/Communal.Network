@@ -1,16 +1,16 @@
 # Communal.Network
 
-Communal.Network is a Modular Medium Distributed Distribution Secure System (MMDDSS), originally developed by The Holocron.Foundation.
+Communal.Network is a Modular Media Distributed Distribution Secure System (MMDDSS), originally developed by The Holocron.Foundation.
 
-**Modular:** The Holocron.Foundation designed Communal.Network to be modular via two pathways: a "channel" system and an "extension" system:
+**Modular:** The Holocron.Foundation designed Communal.Network to be modular via two pathways:
 * **Channels:** Anyone can claim a channel, and then define how the channel functions - what content the channel distributes, how the UI displays content, who or what can add content to a channel, what governance mechanisms a channel employs...
-* **Extensions:** TODO
+* **Modules:** Modules enable functionality. Modules can live solely on the front-end, enabling users to perform actions such as saving posts, or they can exist on the front and back-end, enabling basic display functionality such as usernames, or it can be more interactive, such as voting up or down posts, or crowdfunding initiatives, tipping...
 
-**Medium:** TODO
+**Media:** Communal.Network can distribute any digital media, and users can interact with any media which has a front-end enabled directly in the browser. You can send basic text strings, stream video, share customized posts, music...
 
-**Distributed:** The Holocron.Foundation placed Communal.Network on the Ethereum blockchain; the Ethereum blockchain distributes the Communal.Network via thousands of computers, located globally, each containing a backup of Communal.Network, in a P2P manner. This global P2P distribution provides censorship-resistance to the network.
+**Distributed:** The Holocron.Foundation placed Communal.Network on the Ethereum blockchain; the Ethereum blockchain distributes Communal.Network via thousands of computers, located globally, each containing a backup of Communal.Network, in a P2P manner. This global P2P distribution provides censorship-resistance to the network.
 
-**Distribution:** TODO
+**Distribution:** The Holocron.Foundation designed Communal.Network to be simple and clean, featuring a lightweight UI, enabling you to distribute anything. You can also interact directly with Communal.Network using lower level interfaces, such as a JavaScript console, or your own contract calls directly on the Ethereum blockchain.
 
 **Secure:** The Ethereum blockchain provides three key pieces of security to Communal.Network:
 * **Personal info/password security:** You are *never* required to send a password, email address, name, or other piece of information to the network.
