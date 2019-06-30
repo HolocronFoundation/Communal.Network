@@ -1,0 +1,3 @@
+# TODO: This module will define the default looks of messages from a channel,
+# as well as potentially more advanced features (e.g. if item is a video, how
+# should it be displayed? Should it be an online player or a download link?)

@@ -1,25 +1,10 @@
-channeled: event({channel_index: indexed(uint256)})
+# TODO: Cut the crap and put this into display.vy and unique.vy
 channel_name_display: event({channel_index: indexed(uint256), channel_name_display: indexed(bytes32)})
-
-last_opened_channel: public(uint256)
 
 channel_index_to_channel_name_unique: public(map(uint256, bytes32))
 channel_name_unique_to_channel_index: public(map(bytes32, uint256))
 
-channel_owner: public(map(uint256, address))
-
-# TODO: Add channel item - think about how this should work - perhaps a helper contract which sends the item, then channels it. Need to make sent items return their index
-@public
-def channel_item()
-# TODO: This
-# Check that the item was sent by the sender - need to use external interface
-
-# TODO: Add channel metadata
-
-@public
-@constant
-def check_owner(channel_index: uint256, owner: address):
-    assert owner == self.channel_owner[channel_index]
+# TODO: Add external call to main contract to check owner
 
 @public
 @payable
