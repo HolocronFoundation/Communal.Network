@@ -1,7 +1,6 @@
 struct item_struct:
     reply_to_index: uint256
     item: bytes32
-    metadata: uint256
 
 item: event({item_index: indexed(uint256)})
 # item_index is the index of the sent item in C.N.
@@ -10,12 +9,14 @@ last_item_index: public(uint256)
 
 items: public(map(uint256, item_struct))
 
+item_metadata: public(map(uint256, uint256)) # TODO: Check this is implemented correctly
+
 # External sender mappings
 external_sender_authorization: public(map(address, map(address, bool)))
 # outer address is the authorizing user
 
 owner: constant(address) = 0xd015FB4e0c7f2D0592fa642189a70ce46C90d612
-custom_metadata_mask: constant(uint256) = 2 ** (12*8+1) - 1 - 7 # Fills 12 bytes with F, then sets the last three bits to 0
+custom_metadata_mask: constant(uint256) = 2 ** (12*8+1) - 1 - 6 # Fills 12 bytes with F, then sets the last third and second to last bits to 0 TODO: Double check this math
 # TODO: Add owner/management functions
 
 # Helper methods - used across several disparate paths
@@ -29,17 +30,13 @@ def external_sender_asserts(msg_sender: address, sender: address):
 def prep_custom_metadata(custom_metadata: uint256) -> uint256:
     return bitwise_and(custom_metadata, custom_metadata_mask)
 
-@private
-def check_item_then_iterate_last_item(reply_to_index: uint256):
-    assert reply_to_index <= self.last_item_index
-    self.last_item_index += 1
 @public
 @constant
 def generate_metadata(sender: address, other_metadata: uint256) -> uint256:
     # Default_metadata is 3 bits.
     #   The leftmost bit represents if a message is a light item
     #   The middle bit represents if a message is sent by an external user
-    #   The right bit represents if an item is an IPFS hash of form Qm (sha2-256)
+    #   The right bit represents if an item is an IPFS hash of form Qm (sha2-256). This bit is set automatically if there is no metadata sent by the user, but must be set manually if the user sends metadata.
     #       Should this change in the future or you want to do something
     #       different now, you should trigger this flag, but also use custom
     #       metadata to indicate this difference.
@@ -47,37 +44,34 @@ def generate_metadata(sender: address, other_metadata: uint256) -> uint256:
 
 # Functions which feed into check_item_then_iterate_last_item, log.item, and generate_metadata
 @private
-def send_light_item(reply_to_index: uint256, sender: address):
-    self.check_item_then_iterate_last_item(reply_to_index)
+def send_light_item(reply_to_index: uint256, sender: address, metadata: uint256, light: uint256 = 4):#TODO: Trace metadata through light items
+    assert reply_to_index <= self.last_item_index
+    self.last_item_index += 1
+    self.item_metadata[self.last_item_index] = self.generate_metadata(sender, metadata + light)
     log.item(self.last_item_index)
 @private
-def send_full_item(item: bytes32, reply_to_index: uint256, sender: address, default_metadata: uint256):
-    self.send_light_item(reply_to_index, sender)
-    self.items[self.last_item_index].metadata = self.generate_metadata(sender, default_metadata)
+def send_full_item(item: bytes32, reply_to_index: uint256, sender: address, metadata: uint256):
+    self.send_light_item(reply_to_index, sender, metadata, 0)
     self.items[self.last_item_index].reply_to_index = reply_to_index
     self.items[self.last_item_index].item = item
 
 # Functions which feed into send_light_item
 @private
-def send_light_item_external(reply_to_index: uint256, sender: address, msg_sender: address):
+def send_light_item_external(reply_to_index: uint256, sender: address, msg_sender: address, metadata: uint256):
     self.external_sender_asserts(msg_sender, sender)
-    self.send_light_item(reply_to_index, sender)
+    self.send_light_item(reply_to_index, sender, metadata)
 @public
 @payable
 def send_light_message_user(item: bytes32, reply_to_index: uint256 = 0):
-    self.send_light_item(reply_to_index, msg.sender)
+    self.send_light_item(reply_to_index, msg.sender, 0)
 @public
 @payable
 def send_light_hash_user(item: bytes32, reply_to_index: uint256 = 0):
-    self.send_light_item(reply_to_index, msg.sender)
+    self.send_light_item(reply_to_index, msg.sender, 1)
 @public
 @payable
-def send_light_message_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_light_item(reply_to_index, msg.sender)
-@public
-@payable
-def send_light_hash_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_light_item(reply_to_index, msg.sender)
+def send_light_item_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
+    self.send_light_item(reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata))
 
 # Functions which feed into send_full_item
 @private
@@ -94,12 +88,8 @@ def send_full_hash_user(item: bytes32, reply_to_index: uint256 = 0):
     self.send_full_item(item, reply_to_index, msg.sender, 1)
 @public
 @payable
-def send_full_message_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
+def send_full_item_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_full_item(item, reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata))
-@public
-@payable
-def send_full_hash_user_with_metadata(item: bytes32, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_full_item(item, reply_to_index, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
 
 # Functions which feed into send_full_item_external
 @public
@@ -112,32 +102,24 @@ def send_full_hash_external(item: bytes32, sender: address, reply_to_index: uint
     self.send_full_item_external(item, reply_to_index, sender, msg.sender, 1)
 @public
 @payable
-def send_full_message_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
+def send_full_item_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
     self.send_full_item_external(item, reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata))
-@public
-@payable
-def send_full_hash_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_full_item_external(item, reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata) + 1)
 
 # Functions which feed into send_light_item_external
 @public
 @payable
 def send_light_message_external(item: bytes32, sender: address, reply_to_index: uint256 = 0):
-    self.send_light_item_external(reply_to_index, sender, msg.sender)
+    self.send_light_item_external(reply_to_index, sender, msg.sender, 0)
 @public
 @payable
 def send_light_hash_external(item: bytes32, sender: address, reply_to_index: uint256 = 0):
-    self.send_light_item_external(reply_to_index, sender, msg.sender)
+    self.send_light_item_external(reply_to_index, sender, msg.sender, 1)
 @public
 @payable
-def send_light_message_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_light_item_external(reply_to_index, sender, msg.sender)
-@public
-@payable
-def send_light_hash_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
-    self.send_light_item_external(reply_to_index, sender, msg.sender)
+def send_light_item_external_with_metadata(item: bytes32, sender: address, custom_metadata: uint256, reply_to_index: uint256 = 0):
+    self.send_light_item_external(reply_to_index, sender, msg.sender, self.prep_custom_metadata(custom_metadata))
 
-# Editing functions (full items only!)
+# Editing functions (full items only!) TODO: Check these items with the metadata changes
 
 @private
 def edit(new_item: bytes32, item_index: uint256, sender: address):
