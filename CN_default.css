@@ -1,0 +1,33 @@
+
+body {
+  overflow: hidden;
+}
+
+h1 {
+  text-align: center;
+  /* TODO: Set a default size in em */
+}
+
+header {
+  /* TODO: Reduce padding, etc. */
+}
+
+.feed {
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* TODO: set height equal to max height */
+  max-height: 10em; /* TODO: Calc this later - (100% - header height - footer height) */
+  width: 70%;  /* TODO: Let this be set semi-dynamically (e.g. mobile v. desktop) */
+  max-width: 90%;
+  /* TODO: set a min-width */
+  resize: horizontal;
+  margin-left: auto;
+	margin-right: auto;
+  /* TODO: Add left and right borders */
+}
+
+.item {
+  overflow: auto;
+  /* TODO: set default height */
+  resize: vertical;
+}
