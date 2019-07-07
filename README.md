@@ -23,3 +23,9 @@ Communal.Network is a Modular Media Distributed Distribution Secure System (MMDD
 * **File-distribution:** Users can store files using IPFS and distribute the hashes of those files via the Ethereum back-end. Users can post content via IPFS directly in their browser, or post files to IPFS and later distribute the hashes via Communal.Network.
 
 Communal.Network is open source, and The Holocron.Foundation has licensed the code under the CC0 license - effectively, the code is in the public domain. The Holocron.Foundation appreciates contributions to the Communal.Network code-base!
+
+## Development items
+
+Most development items are listed in their respective files in comments starting with TODO. The items below are items which have not found a home yet.
+
+- Create a makefile which will compile Vyper and insert the proper interface into individual files as needed (e.g. ABI into JS, interface into modules)

@@ -9,7 +9,7 @@ external_sender_authorization: public(map(address, map(address, bool)))
 # outer address is the authorizing user
 
 owner: constant(address) = 0xd015FB4e0c7f2D0592fa642189a70ce46C90d612
-custom_metadata_mask: constant(uint256) = 2 ** (12*8+1) - 1 - 6 # Fills 12 bytes with F, then sets the last third and second to last bits to 0 TODO: Double check this math
+custom_metadata_mask: constant(uint256) = 2 ** (12*8+1) - 1 - 2 # Fills 12 bytes with F, then sets the second to last bit to 0 TODO: Double check this math
 # TODO: Add owner/management functions - most notably update functionality
 
 # Helper methods - used across several disparate paths
@@ -26,9 +26,8 @@ def prep_custom_metadata(custom_metadata: uint256) -> uint256:
 @public
 @constant
 def generate_metadata(sender: address, other_metadata: uint256) -> uint256:
-    # Default_metadata is 3 bits.
-    #   The leftmost bit represents if a message is a light item
-    #   The middle bit represents if a message is sent by an external user
+    # Default_metadata is 2 bits.
+    #   The left bit represents if a message is sent by an external user
     #   The right bit represents if an item is an IPFS hash of form Qm (sha2-256). This bit is set automatically if there is no metadata sent by the user, but must be set manually if the user sends metadata.
     #       Should this change in the future or you want to do something
     #       different now, you should trigger this flag, but also use custom
@@ -37,17 +36,17 @@ def generate_metadata(sender: address, other_metadata: uint256) -> uint256:
 
 # Functions which feed into check_item_then_iterate_last_item, log.item, and generate_metadata
 @private
-def send_item(reply_to_index: uint256, sender: address, metadata: uint256, light: uint256 = 4):#TODO: Trace metadata through light items
+def send_item(reply_to_index: uint256, sender: address, metadata: uint256):
     assert reply_to_index <= self.last_item_index
     self.last_item_index += 1
-    self.item_metadata[self.last_item_index] = self.generate_metadata(sender, metadata + light)
+    self.item_metadata[self.last_item_index] = self.generate_metadata(sender, metadata)
     log.item(self.last_item_index)
 
 # Functions which feed into send_item
 @private
 def send_item_external(reply_to_index: uint256, sender: address, msg_sender: address, metadata: uint256):
     self.external_sender_asserts(msg_sender, sender)
-    self.send_item(reply_to_index, sender, metadata)
+    self.send_item(reply_to_index, sender, metadata + 2)
 @public
 @payable
 def send_message_user(item: bytes32, reply_to_index: uint256 = 0):

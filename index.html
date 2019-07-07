@@ -17,6 +17,14 @@
 		</header>
 		<div>
 			<div id="new_message" class="send_message">
+				<!-- box to compose message -->
+				<div>
+					<textarea id="new_item_written"></textarea>
+				</div>
+				<!-- send button TODO: Some cleanup obviously -->
+				<div>
+					<button onclick="cn.send.message(document.getElementById('new_item_written').value);">Send</button>
+				</div>
 			</div>
 			<div id="all_feed" class="feed">
 				<!-- Below is a sample item, in order to establish the standard for items -->
