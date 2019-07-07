@@ -114,7 +114,7 @@ window.addEventListener('load', async function() {
   cn.abi = get_cn_abi("main");
   cn.contract.live = new cn.web3.js.eth.Contract(cn.abi, cn.contract.address); // TODO: Consider options
   cn.items.new.subscription = cn.contract.live.events.item(); // TODO: Consider options
-  cn.items.old = cn.contract.live.getPastEvents("item"); // TODO: Consider options
+  cn.items.old = cn.contract.live.getPastEvents("item", {filter: {}, fromBlock: 0, toBlock: 'latest'}); // TODO: Consider options, replace fromblock with deployment block
   abiDecoder.addABI(cn.abi);
   load_old_items(cn);
   //TODO: Add a refresh thing when new messages come in
