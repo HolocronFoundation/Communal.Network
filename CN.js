@@ -114,16 +114,56 @@ window.addEventListener('load', async function() {
   cn.abi = get_cn_abi("main");
   cn.contract.live = new cn.web3.js.eth.Contract(cn.abi, cn.contract.address); // TODO: Consider options
   cn.items.new.subscription = cn.contract.live.events.item(); // TODO: Consider options
-  cn.items.old = cn.contract.live.getPastEvents("item", {filter: {}, fromBlock: 0, toBlock: 'latest'}); // TODO: Consider options, replace fromblock with deployment block
   abiDecoder.addABI(cn.abi);
   load_old_items(cn);
   //TODO: Add a refresh thing when new messages come in
   load_new_items(cn);
 });
 
-function load_old_items(cn = window.cn) {
-  // TODO: Fill this
+async function load_old_items(cn = window.cn) {
+  cn.items.old = await cn.contract.live.getPastEvents("item", {filter: {}, fromBlock: 0, toBlock: 'latest'}); // TODO: Consider options, replace fromblock with deployment block
+  // TODO: The optimal way to load items once the network gets larger is to load backwards from the most recent block, waiting only for a page worth of items before displaying.
+  cn.items.old.forEach(load_item);
+  // Foreach item in cn.items.old
+  //  loop through, put newest at top, oldest at bottom
+  //  mirror this based on the load new items function
 }
+
+async function load_item(item_data) {
+  item = {
+    index: item_data.returnValues.item_index,// TODO: Use to position
+    hash: item_data.transactionHash,
+    raw: undefined,
+    sender: undefined,
+    call: undefined,
+    is: {
+      light: undefined,
+      hash: undefined,
+      external: undefined,
+      reply: undefined
+    },
+    metadata: undefined,
+    data: undefined
+  };
+  console.log(item_data);
+  console.log(item.index); //TODO: Use to place in a feed
+  console.log(item.hash); // TODO: Get the message via loading the tx from the hash; get the metadata from the hash if light; get the reply to index
+  item.raw = await cn.web3.js.eth.getTransaction(item.hash);
+  console.log(item);
+  item.sender = item.raw.from;
+  item.call = abiDecoder.decodeMethod(item.raw.input);
+  item.call.params = item.call.params.reduce(function(map, parameters) {
+    map[parameters.name] = parameters.value;
+    return map;
+  }, {});
+  item.metadata = cn.decode.metadata(item.call.params.custom_metadata); // TODO: load metadata
+  item.is.hash = item.call.name.includes("hash");  //TODO: Replace with a metadata read
+  item.is.external = item.call.name.includes("external");  //TODO: Replace with a metadata read
+  item.is.light = item.call.name.includes("light"); //TODO: Replace with a metadata read
+  // TODO: Get and check if item is reply
+}
+
+// TODO: Consider a feed that exists across functions, and merges old + new
 
 function load_new_items(cn = window.cn) {
   cn.items.new.subscription.on("data", async function(new_item_data) {
