@@ -1,6 +1,8 @@
 item: event({item_index: indexed(uint256)})
 # item_index is the index of the sent item in C.N.
 
+# TODO: Is there functionality which is more core than "reply"
+
 last_item_index: public(uint256)
 item_metadata: public(map(uint256, uint256)) # TODO: Check this is implemented correctly
 

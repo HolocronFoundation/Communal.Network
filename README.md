@@ -36,3 +36,21 @@ Most development items are listed in their respective files in comments starting
   - Watch this https://docs.ipfs.io/guides/concepts/mfs/
 - Should editing be allowed? If so, allow via IPNS, if not then use hashes
 - Setup one of my servers to host content sent to C.N. until it grows
+
+## Misc notes
+
+These notes do not have a perfect home, but are important to the development of CN.
+
+### Channel Design Notes
+
+Channels need to be highly flexible - they will each need to exist in their unique formats. There also needs to be the ability to compile them into a "website" in a different fashion than the traditional feed layout - some channels are intended to last forever.
+
+Some initial channels follow below:
+- Wikidumps
+  - A very basic data feed, containing the latest wikidumps (initially English, later all if we recieve funding.) Late, could create a dWiki?
+- Feed
+  - A very basic feed, displaying items in order that they were sent. This is essentially the "unchanneled" communal network. Items are displayed in order, and anyone may make a post.
+- Vote
+  - A feed sorted based upon types of posts submitted weighted by votes. Initially one, but could later add subcategories
+- Gutenberg
+  - The most complex case, can be viewed in a feed form, highlighting the latest books, or could switch to a "library" form, which is searchable and browseable more like a traditional website
