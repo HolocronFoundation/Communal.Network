@@ -29,3 +29,4 @@ Communal.Network is open source, and The Holocron.Foundation has licensed the co
 Most development items are listed in their respective files in comments starting with TODO. The items below are items which have not found a home yet.
 
 - Create a makefile which will compile Vyper and insert the proper interface into individual files as needed (e.g. ABI into JS, interface into modules)
+- Implement a CN IPFS server script, which will backup everything posted to CN.

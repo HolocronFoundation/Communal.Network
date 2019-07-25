@@ -8,105 +8,127 @@
 // TODO: Sort out getPastEvents
 
 // Globals
-// CN
-cn = (function() {
-  self = {
-    web3: {
-      js: undefined, // Loaded via setup_web3
-      type: undefined,
-      fallback: {
-        provider: undefined,
-        endpoint: undefined
-      }
-    },
-    abi: undefined,
-    contract: {
-      address: undefined,
-      live: undefined
-    },
-    items: {
-      new: {
-        subscription: undefined,
-        queue: {}
-      },
-      old: {
-        raw: undefined,
-        loaded: undefined
-      }
-    },
-    send: {
-      message: async function(to_send) {
-        // TODO: Check if message is larger than 32 bytes, if so then hash on IPFS
-        if (!self.user.account.available) {
-          await self.user.account.load();
-        }
-        if (self.user.account.available) {
-          call = self.contract.live.methods.send_message_user(self.web3.js.utils.utf8ToHex(to_send));
-          call.estimateGas({
-            from: self.user.account.address
-          }).then(function(gas_estimate) {
-            call.send({
-              from: self.user.account.address,
-              gas: gas_estimate
-            }).on('transactionHash', function(hash) {
-              console.log("Item succesfully sent, tx hash: " + hash);
-              // TODO: Alert user it has sent succesfully
-            }); //TODO: What happens after the send?
-          });
-        } else {
-          throw "No account"; //TODO: Do more here
-        }
-
-      }
-    },
-    user: {
-      account: {
-        available: false,
-        address: undefined,
-        load: async function() {
-          try {
-            switch (self.web3.type) {
-              case 0:
-                throw "You are not injecting web3!";
-              case 2:
-                await ethereum.enable();
-                /* falls through */
-              case 1:
-                accounts = await self.web3.js.eth.getAccounts();
-                if (accounts.length != 0) {
-                  self.user.account.address = accounts[0];
-                  self.user.account.available = true;
-                } else {
-                  throw "You are not logged in!";
-                }
-                return true;
+  // CN
+    cn = (function() {
+      self = {
+        web3: {
+          js: undefined, // Loaded via setup_web3
+          type: undefined,
+          fallback: {
+            provider: undefined,
+            endpoint: undefined
+          }
+        },
+        abi: undefined,
+        contract: {
+          address: undefined,
+          live: undefined
+        },
+        items: {
+          new: {
+            subscription: undefined,
+            queue: {}
+          },
+          old: {
+            raw: undefined,
+            loaded: undefined
+          }
+        },
+        send: {
+          message: async function(to_send) {
+            // TODO: Check if message is larger than 32 bytes, if so then hash on IPFS
+            if (!self.user.account.available) {
+              await self.user.account.load();
             }
-          } catch (error) {
-            // TODO: catch account not enabled
-            // TODO: catch not logged in
-            // TODO: catch no injected web3
-            console.log(error);
-            return false;
+            if (self.user.account.available) {
+              call = self.contract.live.methods.send_message_user(self.web3.js.utils.utf8ToHex(to_send));
+              call.estimateGas({
+                from: self.user.account.address
+              }).then(function(gas_estimate) {
+                call.send({
+                  from: self.user.account.address,
+                  gas: gas_estimate
+                }).on('transactionHash', function(hash) {
+                  console.log("Item succesfully sent, tx hash: " + hash);
+                  // TODO: Alert user it has sent succesfully
+                }); //TODO: What happens after the send?
+              });
+            } else {
+              throw "No account"; //TODO: Do more here
+            }
+
+          }
+        },
+        user: {
+          account: {
+            available: false,
+            address: undefined,
+            load: async function() {
+              try {
+                switch (self.web3.type) {
+                  case 0:
+                    throw "You are not injecting web3!";
+                  case 2:
+                    await ethereum.enable();
+                    /* falls through */
+                  case 1:
+                    accounts = await self.web3.js.eth.getAccounts();
+                    if (accounts.length != 0) {
+                      self.user.account.address = accounts[0];
+                      self.user.account.available = true;
+                    } else {
+                      throw "You are not logged in!";
+                    }
+                    return true;
+                }
+              } catch (error) {
+                // TODO: catch account not enabled
+                // TODO: catch not logged in
+                // TODO: catch no injected web3
+                console.log(error);
+                return false;
+              }
+            }
+          }
+        },
+        decode: {
+          metadata: function(to_decode) {
+            return to_decode; //TODO: Decode here
+          },
+          data: function(to_decode, is_hash) { // TODO: Add encoding param (default is utf-8)
+            if (is_hash) {
+              return to_decode; //TODO: Decode here
+            }
+            else {
+              return self.web3.js.utils.toUtf8(to_decode);
+            }
           }
         }
-      }
-    },
-    decode: {
-      metadata: function(to_decode) {
-        return to_decode; //TODO: Decode here
-      },
-      data: function(to_decode, is_hash) { // TODO: Add encoding param (default is utf-8)
-        if (is_hash) {
-          return to_decode; //TODO: Decode here
-        }
-        else {
-          return self.web3.js.utils.toUtf8(to_decode);
-        }
-      }
+      };
+      return self;
+    })();
+  // IPFS TODO: Create a structure like CN once this is more fully implemented
+    IPFS_node = new IPFS();
+    IPFS_loaded = false;
+    IPFS_node.on('ready', async () => {
+      version = await node.version();
+      console.log('IPFS version:', version.version);
+      IPFS_loaded = true;
+    });
+    function IPFS_add_text() {
+      // TODO: create this function - add the text from the send box
     }
-  };
-  return self;
-})();
+    function IPFS_add_file() {
+      // TODO: create this function - add a file from an upload function, also consider allowing the user to add surrounding text...
+    }
+    function IPFS_add_item(text, file) {
+      // TODO: Add items in this format, allow formating
+    }
+    // TODO: Think about a more dynamic way to do this (e.g. text editor? Allow multiple files, etc. etc.)
+    // TODO: Think about if (and how) I should enable the mutable file system
+    function IPFS_load(hash) {
+      // TODO: code this using cat, but also consider CN setup and UI
+    }
 
 // Setting up basic web3 enviroment
 window.addEventListener('load', async function() {
