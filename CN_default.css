@@ -12,7 +12,21 @@ header {
   /* TODO: Reduce padding, etc. */
 }
 
+#nav {
+  display: inline-block;
+}
+
+.options {
+  border: 1px solid red;
+  text-align: center;
+}
+
+#all_feed {
+  display: inline-block;
+}
+
 .feed {
+  position: relative;
   overflow-y: auto;
   overflow-x: hidden;
   /* TODO: set height equal to max height */
@@ -26,8 +40,14 @@ header {
   /* TODO: Add left and right borders */
 }
 
-.item {
+.item_holder {
   overflow: auto;
   /* TODO: set default height */
   resize: vertical;
+  padding: 1px 10px;
+  border: 1px solid red;
+}
+
+.send_message {
+  text-align: center
 }
