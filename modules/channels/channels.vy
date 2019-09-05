@@ -1,18 +1,15 @@
-# TODO: Potentially subsume into main contract, or have the main contract able to send message then pass through items to modules
 
-channeled: event({channel_index: indexed(uint256)})
 
-last_opened_channel: public(uint256)
 
-channel_owner: public(map(uint256, address))
+
+# TODO: Add bidding mechanism for unique items (names, channels, channel names)
+# TODO: Add channel rent
 
 # TODO: Add channel item - think about how this should work - perhaps a helper contract which sends the item, then channels it. Need to make sent items return their index
 @public
 def channel_item()
 # TODO: This
 # Check that the item was sent by the sender - need to use external interface
-
-# TODO: Add channel metadata
 
 @public
 @constant
